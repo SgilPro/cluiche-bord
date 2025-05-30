@@ -1,0 +1,80 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  gameSessions  GameSessionPlayer[]
+  createdGames  Game[]    @relation("GameCreator")
+}
+
+model Game {
+  id            String    @id @default(cuid())
+  name          String
+  description   String?
+  minPlayers    Int       @default(2)
+  maxPlayers    Int       @default(4)
+  rules         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  creatorId     String
+  creator       User      @relation("GameCreator", fields: [creatorId], references: [id])
+  sessions      GameSession[]
+}
+
+model GameSession {
+  id            String    @id @default(cuid())
+  gameId        String
+  game          Game      @relation(fields: [gameId], references: [id])
+  status        String    @default("waiting") // waiting, playing, finished
+  currentTurn   Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  players       GameSessionPlayer[]
+  actions       GameSessionAction[]
+}
+
+model GameSessionPlayer {
+  id            String    @id @default(cuid())
+  sessionId     String
+  session       GameSession @relation(fields: [sessionId], references: [id])
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  playerOrder   Int
+  score         Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  actions       GameSessionAction[]
+
+  @@unique([sessionId, userId])
+  @@unique([sessionId, playerOrder])
+}
+
+model GameSessionAction {
+  id            String    @id @default(cuid())
+  sessionId     String
+  session       GameSession @relation(fields: [sessionId], references: [id])
+  playerId      String
+  player        GameSessionPlayer @relation(fields: [playerId], references: [id])
+  actionType    String    // move, score, etc.
+  actionData    Json      // 儲存動作相關資料
+  createdAt     DateTime  @default(now())
+}
