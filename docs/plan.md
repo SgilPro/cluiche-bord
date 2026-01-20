@@ -85,25 +85,96 @@
 
 ### 部署策略建議
 
-#### 階段一：開發和原型（推薦 Supabase）
+#### 階段一：開發和原型（使用檔案系統）
 ```typescript
-// 使用 Supabase 快速開始
-import { createClient } from '@supabase/supabase-js'
+// 使用檔案系統進行開發
+import fs from 'fs';
+import path from 'path';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+const ROOMS_FILE = path.join(process.cwd(), "data", "rooms.json");
+
+// 讀取資料
+const readRooms = (): Room[] => {
+  try {
+    const data = fs.readFileSync(ROOMS_FILE, "utf-8");
+    return JSON.parse(data);
+  } catch (error) {
+    console.error("Failed to read rooms:", error);
+    return [];
+  }
+};
+
+// 寫入資料
+const writeRooms = (rooms: Room[]) => {
+  try {
+    fs.writeFileSync(ROOMS_FILE, JSON.stringify(rooms, null, 2));
+  } catch (error) {
+    console.error("Failed to write rooms:", error);
+  }
+};
 ```
 
-#### 階段二：生產部署（Railway 或 DigitalOcean）
+優點：
+- 簡單直接，不需要額外設定
+- 適合小型應用或原型開發
+- 資料持久化，重啟後資料還在
+- 快速開發和測試
+
+缺點：
+- 效能較差，每次讀寫都要 I/O 操作
+- 不適合多伺服器部署
+- 檔案鎖定可能造成問題
+- 擴展性有限
+
+#### 階段二：Redis 快取層（效能優化）
 ```typescript
-// 切換到標準 PostgreSQL
-import { Pool } from 'pg'
+// 使用 Redis 作為快取
+import { Redis } from 'ioredis';
+
+const redis = new Redis(process.env.REDIS_URL);
+
+// 房間資料結構
+interface Room {
+  id: string;
+  name: string;
+  maxPlayers: number;
+  players: string[];
+  createdAt: string;
+  lastActivity: string;
+}
+
+// 使用 Redis 的 Hash 結構儲存房間
+const saveRoom = async (room: Room) => {
+  await redis.hset(`room:${room.id}`, room);
+  // 設定過期時間為 1 小時
+  await redis.expire(`room:${room.id}`, 3600);
+};
+
+// 使用 Redis 的 Sorted Set 追蹤房間活動時間
+const updateRoomActivity = async (roomId: string) => {
+  await redis.zadd('room:activities', Date.now(), roomId);
+};
+```
+
+優點：
+- 極快的讀寫速度（記憶體操作）
+- 支援多伺服器部署
+- 內建過期機制（TTL）
+- 原子操作，避免競態條件
+
+#### 階段三：完整資料庫（生產環境）
+```typescript
+// 使用 PostgreSQL 作為主要儲存
+import { Pool } from 'pg';
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-})
+});
+
+// 使用 Prisma 作為 ORM
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 ```
 
 ### 遷移性設計原則
@@ -117,12 +188,21 @@ export interface DatabaseAdapter {
   transaction<T>(callback: (client: any) => Promise<T>): Promise<T>;
 }
 
-// lib/db/supabase-adapter.ts
-export class SupabaseAdapter implements DatabaseAdapter {
-  constructor(private supabase: SupabaseClient) {}
+// lib/db/file-adapter.ts
+export class FileAdapter implements DatabaseAdapter {
+  constructor(private filePath: string) {}
   
   async query<T>(sql: string, params?: any[]): Promise<T[]> {
-    // Supabase 特定實現
+    // 檔案系統實作
+  }
+}
+
+// lib/db/redis-adapter.ts
+export class RedisAdapter implements DatabaseAdapter {
+  constructor(private redis: Redis) {}
+  
+  async query<T>(sql: string, params?: any[]): Promise<T[]> {
+    // Redis 實作
   }
 }
 
@@ -131,14 +211,16 @@ export class PostgresAdapter implements DatabaseAdapter {
   constructor(private pool: Pool) {}
   
   async query<T>(sql: string, params?: any[]): Promise<T[]> {
-    // 標準 PostgreSQL 實現
+    // PostgreSQL 實作
   }
 }
 
 // lib/db/index.ts
 export const db = process.env.NODE_ENV === 'development' 
-  ? new SupabaseAdapter(supabase)
-  : new PostgresAdapter(pool);
+  ? new FileAdapter(ROOMS_FILE)
+  : process.env.USE_REDIS
+    ? new RedisAdapter(redis)
+    : new PostgresAdapter(pool);
 ```
 
 ### 遷移步驟規劃
@@ -172,18 +254,20 @@ NEXTAUTH_SECRET=your-secret
 
 ### 建議的發展路徑
 
-1. **第一階段（開發）**：Supabase 免費方案
+1. **第一階段（開發）**：檔案系統
    - 快速原型開發
    - 測試核心遊戲邏輯
-   - 避免過度依賴平台特有功能
+   - 避免過度依賴外部服務
 
-2. **第二階段（小規模部署）**：Railway 或保持 Supabase
-   - 朋友圈測試
-   - 評估實際使用量
+2. **第二階段（優化）**：Redis
+   - 改善效能
+   - 支援多伺服器部署
+   - 實作自動過期機制
 
-3. **第三階段（擴展）**：DigitalOcean 或其他企業級方案
-   - 用戶增長時
-   - 需要更多控制和客製化
+3. **第三階段（生產）**：PostgreSQL + Redis
+   - 資料持久化
+   - 完整的資料庫功能
+   - 快取層優化
 
 ## 專案架構
 
