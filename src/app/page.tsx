@@ -18,7 +18,7 @@ export default function HomePage() {
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [roomName, setRoomName] = useState("");
   const [roomCode, setRoomCode] = useState("");
-  const [maxPlayers, setMaxPlayers] = useState(4);
+  const [maxPlayers, setMaxPlayers] = useState(10);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -206,13 +206,14 @@ export default function HomePage() {
               </div>
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-2">
-                  最大玩家數
+                  最大玩家數（狼人殺需要 10 人）
                 </label>
                 <select
                   value={maxPlayers}
                   onChange={(e) => setMaxPlayers(Number(e.target.value))}
                   className="w-full px-3 py-2 border rounded-lg"
                 >
+                  <option value="10">10 人（狼人殺）</option>
                   <option value="2">2 人</option>
                   <option value="4">4 人</option>
                   <option value="6">6 人</option>

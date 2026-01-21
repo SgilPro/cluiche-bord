@@ -55,7 +55,77 @@
 - `src/app/`：Next.js 前端與 API Route
 - `src/lib/socket.ts`：全站唯一 socket 連線管理
 - `socket-server.js`：獨立即時通訊伺服器
-- `data/rooms.json`：房間資料儲存（開發用）
+- `prisma/`：Prisma schema 和 migrations
+- `src/generated/prisma/`：Prisma Client 產出目錄
+- `data/rooms.json`：房間資料儲存（開發用，未來將遷移到資料庫）
+
+---
+
+## 資料庫設定
+
+本專案使用 Supabase PostgreSQL 作為資料庫，透過 Prisma ORM 進行資料庫操作。
+
+### 快速開始
+
+1. **設定環境變數**：
+   ```bash
+   cp .env.example .env.local
+   # 編輯 .env.local，填入 Supabase 連線字串
+   ```
+
+2. **產生 Prisma Client**：
+   ```bash
+   npx prisma generate
+   ```
+
+3. **執行 Migration**：
+   ```bash
+   npx prisma migrate dev
+   ```
+
+4. **測試連線**：
+   - 啟動開發伺服器：`npm run dev`
+   - 訪問：`http://localhost:3000/api/test-db`
+
+詳細設定說明請參考：[資料庫設定指南](docs/database-setup.md)
+
+---
+
+## 本地網路開發（WLAN 連線）
+
+如果想在同一 WLAN 網路中的多個設備（手機、平板等）測試：
+
+### 快速設定
+
+1. **找出你的區域網路 IP**：
+   ```bash
+   # macOS/Linux
+   ./scripts/find-local-ip.sh
+   
+   # 或手動查看
+   ifconfig | grep "inet " | grep -v 127.0.0.1
+   ```
+
+2. **設定環境變數**：
+   在 `.env.local` 中加入：
+   ```env
+   NEXT_PUBLIC_SOCKET_URL=ws://YOUR_LOCAL_IP:4001
+   ```
+   例如：`NEXT_PUBLIC_SOCKET_URL=ws://192.168.0.117:4001`
+
+3. **啟動伺服器**：
+   ```bash
+   # 終端機 1：Next.js
+   npm run dev
+   
+   # 終端機 2：Socket.IO
+   node socket-server.js
+   ```
+
+4. **從其他設備連線**：
+   在同一 WLAN 的設備上訪問：`http://YOUR_LOCAL_IP:3000`
+
+詳細說明請參考：[本地網路開發設定指南](docs/local-network-setup.md)
 
 ---
 
