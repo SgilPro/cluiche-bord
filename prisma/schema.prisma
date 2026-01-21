@@ -78,3 +78,15 @@ model GameSessionAction {
   actionData    Json      // 儲存動作相關資料
   createdAt     DateTime  @default(now())
 }
+
+model Room {
+  id            String    @id // 6位數房間代碼
+  name          String
+  maxPlayers    Int
+  players       Json      @default("[]") // 玩家ID陣列 (socket.id)
+  createdAt     DateTime  @default(now())
+  lastActivity  DateTime  @default(now()) @updatedAt
+
+  @@index([lastActivity])
+  @@index([createdAt])
+}
