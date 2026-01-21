@@ -2,11 +2,13 @@ import { io } from "socket.io-client";
 
 let socket: ReturnType<typeof io> | null = null;
 
+const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "ws://localhost:4001";
+
 export const getSocket = () => {
   if (!socket) {
-    console.log("Initializing Socket.IO client...");
+    console.log("Initializing Socket.IO client...", SOCKET_URL);
 
-    socket = io("ws://localhost:4001", {
+    socket = io(SOCKET_URL, {
       path: "/socket.io",
       transports: ["websocket", "polling"],
       forceNew: true,

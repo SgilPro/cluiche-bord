@@ -1,17 +1,20 @@
 const { Server } = require("socket.io");
 const http = require("http");
-const fs = require("fs");
-const path = require("path");
+const { PrismaClient } = require("./src/generated/prisma");
+const {
+  initializeGame,
+  applyAction,
+  getPlayerView,
+  checkVictory,
+} = require("./src/lib/games/werewolf/engine");
 
-const ROOMS_FILE = path.join(process.cwd(), "data", "rooms.json");
+const prisma = new PrismaClient();
 
-// 確保 data 目錄存在
-if (!fs.existsSync(path.join(process.cwd(), "data"))) {
-  fs.mkdirSync(path.join(process.cwd(), "data"));
-}
-if (!fs.existsSync(ROOMS_FILE)) {
-  fs.writeFileSync(ROOMS_FILE, JSON.stringify([]));
-}
+// 遊戲狀態管理：Map<roomId, GameState>
+const gameStates = new Map();
+
+// 玩家資訊管理：Map<socketId, { playerId, roomId, nickname }>
+const playerInfo = new Map();
 
 const server = http.createServer();
 const io = new Server(server, {
@@ -25,39 +28,42 @@ const io = new Server(server, {
   pingInterval: 25000,
 });
 
-function readRooms() {
+/**
+ * 更新房間玩家列表
+ */
+async function updateRoomPlayers(roomId, playerId, isJoining) {
   try {
-    const data = fs.readFileSync(ROOMS_FILE, "utf-8");
-    return JSON.parse(data);
-  } catch (error) {
-    console.error("Failed to read rooms:", error);
-    return [];
-  }
-}
+    const room = await prisma.room.findUnique({
+      where: { id: roomId },
+    });
 
-function writeRooms(rooms) {
-  try {
-    fs.writeFileSync(ROOMS_FILE, JSON.stringify(rooms, null, 2));
-  } catch (error) {
-    console.error("Failed to write rooms:", error);
-  }
-}
+    if (!room) {
+      console.error(`Room ${roomId} not found`);
+      return;
+    }
 
-function updateRoomPlayers(roomId, playerId, isJoining) {
-  const rooms = readRooms();
-  const roomIndex = rooms.findIndex((room) => room.id === roomId);
-  if (roomIndex !== -1) {
+    const players = [...(room.players || [])];
+
     if (isJoining) {
-      if (!rooms[roomIndex].players.includes(playerId)) {
-        rooms[roomIndex].players.push(playerId);
+      if (!players.includes(playerId)) {
+        players.push(playerId);
       }
     } else {
-      rooms[roomIndex].players = rooms[roomIndex].players.filter(
-        (id) => id !== playerId
-      );
+      const index = players.indexOf(playerId);
+      if (index > -1) {
+        players.splice(index, 1);
+      }
     }
-    rooms[roomIndex].lastActivity = new Date().toISOString();
-    writeRooms(rooms);
+
+    await prisma.room.update({
+      where: { id: roomId },
+      data: {
+        players,
+        lastActivity: new Date(),
+      },
+    });
+  } catch (error) {
+    console.error(`Failed to update room players for room ${roomId}:`, error);
   }
 }
 
@@ -65,18 +71,251 @@ io.on("connection", (socket) => {
   console.log("Client connected:", socket.id);
   socket.emit("connection-confirmed", { id: socket.id });
 
-  socket.on("join-room", (roomId) => {
-    console.log(`Client ${socket.id} joining room ${roomId}`);
-    socket.join(roomId);
-    updateRoomPlayers(roomId, socket.id, true);
-    io.emit("user-joined", roomId);
+  // 玩家加入房間（現場模式）
+  socket.on("join-room", async (data) => {
+    const { roomId, playerId, nickname } = data;
+    console.log(`Client ${socket.id} (playerId: ${playerId}) joining room ${roomId}`);
+    
+    if (!roomId || !playerId || !nickname) {
+      socket.emit("error", { message: "缺少必要參數：roomId, playerId, nickname" });
+      return;
+    }
+
+    try {
+      const room = await prisma.room.findUnique({
+        where: { id: roomId },
+      });
+
+      if (!room) {
+        socket.emit("error", { message: "房間不存在" });
+        return;
+      }
+
+      const players = room.players || [];
+      const gameState = gameStates.get(roomId);
+
+      // 如果遊戲已開始，不允許新玩家加入
+      if (gameState && gameState.phase !== "setup") {
+        socket.emit("error", { message: "遊戲已開始，無法加入" });
+        return;
+      }
+
+      // 檢查玩家是否已在房間中
+      const existingPlayer = Array.isArray(players) 
+        ? players.find((p) => typeof p === "object" && p.playerId === playerId)
+        : null;
+
+      if (!existingPlayer) {
+        // 檢查房間是否已滿
+        if (players.length >= room.maxPlayers) {
+          socket.emit("error", { message: "房間已滿" });
+          return;
+        }
+
+        // 添加玩家到房間
+        const newPlayer = { playerId, socketId: socket.id, nickname };
+        const updatedPlayers = [...players, newPlayer];
+        
+        await prisma.room.update({
+          where: { id: roomId },
+          data: {
+            players: updatedPlayers,
+            lastActivity: new Date(),
+          },
+        });
+      }
+
+      // 記錄玩家資訊
+      playerInfo.set(socket.id, { playerId, roomId, nickname });
+
+      socket.join(roomId);
+      
+      // 如果已有遊戲狀態，發送當前狀態給新加入的玩家
+      if (gameState) {
+        const view = getPlayerView(gameState, playerId);
+        socket.emit("game:state", view);
+      } else {
+        // 發送房間資訊
+        const room = await prisma.room.findUnique({ where: { id: roomId } });
+        socket.emit("room:joined", {
+          roomId,
+          players: room.players || [],
+          maxPlayers: room.maxPlayers,
+        });
+      }
+
+      // 通知房間內其他玩家
+      socket.to(roomId).emit("user-joined", { roomId, playerId, nickname });
+    } catch (error) {
+      console.error(`Failed to join room ${roomId}:`, error);
+      socket.emit("error", { message: "加入房間失敗" });
+    }
   });
 
-  socket.on("leave-room", (roomId) => {
+  // 玩家離開房間
+  socket.on("leave-room", async (roomId) => {
     console.log(`Client ${socket.id} leaving room ${roomId}`);
+    const info = playerInfo.get(socket.id);
     socket.leave(roomId);
-    updateRoomPlayers(roomId, socket.id, false);
-    io.emit("user-left", roomId);
+    
+    if (info) {
+      try {
+        const room = await prisma.room.findUnique({ where: { id: roomId } });
+        if (room) {
+          const players = room.players || [];
+          const updatedPlayers = Array.isArray(players)
+            ? players.filter((p) => typeof p === "object" && p.playerId !== info.playerId)
+            : [];
+          
+          await prisma.room.update({
+            where: { id: roomId },
+            data: {
+              players: updatedPlayers,
+              lastActivity: new Date(),
+            },
+          });
+        }
+        playerInfo.delete(socket.id);
+        io.to(roomId).emit("user-left", { roomId, playerId: info.playerId });
+      } catch (error) {
+        console.error(`Failed to leave room ${roomId}:`, error);
+      }
+    }
+  });
+
+  // 開始遊戲（僅房主可執行）
+  socket.on("game:start", async (data) => {
+    const { roomId } = data;
+    const info = playerInfo.get(socket.id);
+    
+    if (!info || info.roomId !== roomId) {
+      socket.emit("error", { message: "無權限開始遊戲" });
+      return;
+    }
+
+    try {
+      const room = await prisma.room.findUnique({ where: { id: roomId } });
+      if (!room) {
+        socket.emit("error", { message: "房間不存在" });
+        return;
+      }
+
+      const players = room.players || [];
+      if (players.length !== 10) {
+        socket.emit("error", { message: "需要正好 10 位玩家才能開始遊戲" });
+        return;
+      }
+
+      // 初始化遊戲
+      const playerList = Array.isArray(players)
+        ? players.map((p) => ({
+            playerId: p.playerId,
+            socketId: p.socketId,
+            nickname: p.nickname,
+          }))
+        : [];
+
+      const gameState = initializeGame(roomId, playerList);
+      gameStates.set(roomId, gameState);
+
+      // 進入角色揭示階段
+      gameState.step = "setup:reveal_roles";
+
+      // 向所有玩家發送遊戲狀態
+      for (const player of playerList) {
+        const view = getPlayerView(gameState, player.playerId);
+        io.to(player.socketId).emit("game:state", view);
+      }
+
+      console.log(`Game started in room ${roomId}`);
+    } catch (error) {
+      console.error(`Failed to start game in room ${roomId}:`, error);
+      socket.emit("error", { message: "開始遊戲失敗: " + error.message });
+    }
+  });
+
+  // 玩家執行遊戲操作
+  socket.on("game:action", (data) => {
+    const { roomId, action } = data;
+    const info = playerInfo.get(socket.id);
+
+    if (!info || info.roomId !== roomId) {
+      socket.emit("error", { message: "無權限執行操作" });
+      return;
+    }
+
+    const gameState = gameStates.get(roomId);
+    if (!gameState) {
+      socket.emit("error", { message: "遊戲尚未開始" });
+      return;
+    }
+
+    if (gameState.phase === "finished") {
+      socket.emit("error", { message: "遊戲已結束" });
+      return;
+    }
+
+    try {
+      // 構建完整的 action 物件
+      const fullAction = {
+        type: action.type,
+        playerId: info.playerId,
+        payload: action.payload || {},
+        timestamp: Date.now(),
+      };
+
+      // 特殊處理：獵人查看手勢（自動觸發）
+      if (gameState.step === "night:hunter_check_gesture" && action.type === "hunter:check_gesture") {
+        const player = gameState.players.find((p) => p.playerId === info.playerId);
+        if (player && player.role === "hunter") {
+          // 檢查是否被毒
+          const isPoisoned = gameState.nightResult?.killedByPoison === info.playerId;
+          player.hunterGesture = isPoisoned ? "bad" : "good";
+          if (gameState.nightResult) {
+            gameState.nightResult.hunterGesture = {
+              playerId: info.playerId,
+              gesture: player.hunterGesture,
+            };
+          }
+          // 自動進入下一階段
+          if (gameState.phase === "night_first") {
+            gameState.step = "sheriff:collect_candidates";
+            gameState.phase = "sheriff_election";
+            gameState.sheriffElection = {
+              candidates: [],
+              speechOrder: [],
+              currentSpeechIndex: 0,
+              votes: {},
+            };
+          } else {
+            gameState.step = "day:apply_night_deaths";
+            gameState.phase = "day";
+          }
+        }
+      } else {
+        // 應用操作
+        const newState = applyAction(gameState, fullAction);
+        gameStates.set(roomId, newState);
+
+        // 檢查勝負
+        const winner = checkVictory(newState);
+        if (winner) {
+          newState.winner = winner;
+          newState.phase = "finished";
+          newState.step = null;
+        }
+      }
+
+      // 向所有玩家發送更新後的遊戲狀態
+      const currentState = gameStates.get(roomId);
+      for (const player of currentState.players) {
+        const view = getPlayerView(currentState, player.playerId);
+        io.to(player.socketId).emit("game:state", view);
+      }
+    } catch (error) {
+      console.error(`Failed to apply action in room ${roomId}:`, error);
+      socket.emit("error", { message: "操作失敗: " + error.message });
+    }
   });
 
   socket.on("chat-message", ({ message, roomId }) => {
@@ -96,18 +335,57 @@ io.on("connection", (socket) => {
     io.to(to).emit("signal", { signal, from });
   });
 
-  socket.on("disconnect", () => {
-    const rooms = readRooms();
-    rooms.forEach((room) => {
-      if (room.players.includes(socket.id)) {
-        updateRoomPlayers(room.id, socket.id, false);
-        io.emit("user-left", room.id);
+  socket.on("disconnect", async () => {
+    try {
+      const info = playerInfo.get(socket.id);
+      if (info) {
+        const roomId = info.roomId;
+        const room = await prisma.room.findUnique({ where: { id: roomId } });
+        if (room) {
+          const players = room.players || [];
+          const updatedPlayers = Array.isArray(players)
+            ? players.filter((p) => typeof p === "object" && p.playerId !== info.playerId)
+            : [];
+          
+          await prisma.room.update({
+            where: { id: roomId },
+            data: {
+              players: updatedPlayers,
+              lastActivity: new Date(),
+            },
+          });
+        }
+        playerInfo.delete(socket.id);
+        io.to(roomId).emit("user-left", { roomId, playerId: info.playerId });
       }
-    });
+    } catch (error) {
+      console.error(`Failed to handle disconnect for ${socket.id}:`, error);
+    }
     console.log("Client disconnected:", socket.id);
   });
 });
 
-server.listen(4001, () => {
-  console.log("Socket.IO server running on port 4001");
-}); 
+const PORT = process.env.PORT || 4001;
+const HOST = process.env.HOST || '0.0.0.0'; // 監聽所有網路介面
+
+server.listen(PORT, HOST, () => {
+  console.log("Socket.IO server running");
+  console.log(`  Local:   ws://localhost:${PORT}`);
+  console.log(`  Network: ws://<your-local-ip>:${PORT}`);
+  console.log(`\n  To find your local IP:`);
+  console.log(`    macOS/Linux: ifconfig | grep "inet " | grep -v 127.0.0.1`);
+  console.log(`    Windows: ipconfig`);
+});
+
+// 優雅關閉
+process.on("SIGTERM", async () => {
+  console.log("SIGTERM received, closing Prisma connection...");
+  await prisma.$disconnect();
+  process.exit(0);
+});
+
+process.on("SIGINT", async () => {
+  console.log("SIGINT received, closing Prisma connection...");
+  await prisma.$disconnect();
+  process.exit(0);
+});
