@@ -3,15 +3,12 @@
  */
 
 import type {
-  GameState,
-  PlayerState,
-  PlayerView,
-  RoleId,
-  PhaseId,
-  StepId,
-  WerewolfOptions,
-  NightResult,
-  GameAction,
+    GameAction,
+    GameState,
+    PlayerState,
+    PlayerView,
+    RoleId,
+    WerewolfOptions
 } from "./types";
 
 const DEFAULT_OPTIONS: WerewolfOptions = {
@@ -85,6 +82,7 @@ export function initializeGame(
     phase: "setup",
     step: "setup:assign_roles",
     players: playerStates,
+    readyPlayers: [],
     options: DEFAULT_OPTIONS,
     nightResult: null,
     history: [],
@@ -121,7 +119,8 @@ export function checkVictory(state: GameState): "werewolves" | "villagers" | nul
  */
 export function getAvailableActions(
   state: GameState,
-  playerId: string
+  playerId: string,
+  hostPlayerId?: string
 ): Array<{ type: string; label: string; payload?: Record<string, unknown> }> {
   const player = state.players.find((p) => p.playerId === playerId);
   if (!player || !player.alive) {
@@ -133,19 +132,46 @@ export function getAvailableActions(
   // 根據當前階段和玩家角色決定可用操作
   switch (state.step) {
     case "setup:reveal_roles":
-      actions.push({ type: "ready", label: "準備開始" });
+      // 如果玩家還沒準備，顯示準備按鈕；如果已準備，不顯示按鈕（顯示已準備狀態）
+      const isReady = state.readyPlayers?.includes(playerId) || false;
+      if (!isReady) {
+        actions.push({ type: "ready", label: "準備開始" });
+      }
       break;
 
     case "night:wolves_attack":
       if (player.role === "werewolf") {
+        // 狼人可以選擇擊殺任何存活的玩家（包括其他狼人）
         const aliveTargets = state.players
-          .filter((p) => p.alive && p.role !== "werewolf")
+          .filter((p) => p.alive)
           .map((p) => ({ playerId: p.playerId, nickname: p.nickname, seatNumber: p.seatNumber }));
         actions.push({
           type: "wolf:kill",
           label: "選擇擊殺目標",
           payload: { targets: aliveTargets },
         });
+      }
+      break;
+
+    case "night:wolves_confirm":
+      if (player.role === "werewolf") {
+        // 狼人在確認階段可以改票或確認
+        const aliveTargets = state.players
+          .filter((p) => p.alive)
+          .map((p) => ({ playerId: p.playerId, nickname: p.nickname, seatNumber: p.seatNumber }));
+        actions.push({
+          type: "wolf:kill",
+          label: "改票（重新選擇擊殺目標）",
+          payload: { targets: aliveTargets },
+        });
+        // 檢查是否已經確認
+        const isConfirmed = state.nightResult?.wolfConfirmations?.[playerId] === true;
+        if (!isConfirmed) {
+          actions.push({
+            type: "wolf:confirm",
+            label: "確認擊殺目標",
+          });
+        }
       }
       break;
 
@@ -186,14 +212,57 @@ export function getAvailableActions(
       }
       break;
 
+    case "night:hunter_check_gesture":
+      if (player.role === "hunter") {
+        // 如果已經查看過手勢，顯示確認按鈕
+        if (player.hunterGesture !== null) {
+          actions.push({
+            type: "hunter:confirm_gesture",
+            label: "確認",
+          });
+        } else {
+          // 如果還沒查看，顯示查看手勢按鈕
+          actions.push({
+            type: "hunter:check_gesture",
+            label: "查看手勢",
+          });
+        }
+      }
+      break;
+
     case "sheriff:collect_candidates":
+      // 所有玩家都可以選擇參選或不參選
       actions.push({ type: "sheriff:run", label: "參選警長" });
       actions.push({ type: "sheriff:skip", label: "不參選" });
+      
+      // 只有房主可以看到確認按鈕
+      if (hostPlayerId === playerId) {
+        const alivePlayers = state.players.filter((p) => p.alive);
+        const playerChoices = state.sheriffElection?.playerChoices || {};
+        const allSelected = alivePlayers.every((p) => playerChoices[p.playerId] !== undefined);
+        
+        if (allSelected && alivePlayers.length > 0) {
+          actions.push({ 
+            type: "sheriff:confirm_collect", 
+            label: "確認並進入下一階段" 
+          });
+        }
+      }
       break;
 
     case "sheriff:speeches":
+      // 當前發言的候選人可以結束發言
       if (state.sheriffElection?.speechOrder[state.sheriffElection.currentSpeechIndex] === playerId) {
         actions.push({ type: "sheriff:finish_speech", label: "發言完畢" });
+      }
+      // 所有候選人（包括還沒發言的）都可以退水，直到最後一個發言完
+      if (state.sheriffElection?.candidates.includes(playerId)) {
+        const currentIndex = state.sheriffElection.currentSpeechIndex;
+        const speechOrder = state.sheriffElection.speechOrder;
+        // 只要還沒到最後一個發言完，就可以退水
+        if (currentIndex < speechOrder.length) {
+          actions.push({ type: "sheriff:withdraw", label: "退水" });
+        }
       }
       break;
 
@@ -269,41 +338,148 @@ export function applyAction(state: GameState, action: GameAction): GameState {
   }
 
   // 驗證操作是否合法
-  const availableActions = getAvailableActions(newState, action.playerId);
-  if (!availableActions.some((a) => a.type === action.type)) {
-    throw new Error(`操作 ${action.type} 不合法`);
+  // 對於 sheriff:run 和 sheriff:skip，不需要 hostPlayerId 驗證（它們在 getAvailableActions 中總是可用）
+  // 對於 sheriff:confirm_collect，會在 socket server 層級驗證
+  if (action.type === "sheriff:run" || action.type === "sheriff:skip") {
+    // 簡單驗證：確保當前階段是 sheriff:collect_candidates
+    if (newState.step !== "sheriff:collect_candidates") {
+      throw new Error(`操作 ${action.type} 不合法：當前階段不是 sheriff:collect_candidates`);
+    }
+  } else if (action.type !== "sheriff:confirm_collect" && action.type !== "sheriff:confirm_withdraw") {
+    // 對於其他操作，使用 getAvailableActions 驗證（不傳 hostPlayerId，因為這些操作不依賴它）
+    const availableActions = getAvailableActions(newState, action.playerId);
+    if (!availableActions.some((a) => a.type === action.type)) {
+      throw new Error(`操作 ${action.type} 不合法`);
+    }
   }
 
   // 根據操作類型更新狀態
   switch (action.type) {
     case "ready":
-      // 所有玩家都準備好後，進入首夜
-      // 簡化：假設所有玩家都準備好後自動進入首夜
+      // 記錄玩家已準備
       if (newState.step === "setup:reveal_roles") {
-        newState.step = "night:wolves_attack";
-        newState.phase = "night_first";
-        newState.nightResult = {
-          killedByWolves: null,
-          killedByPoison: null,
-          savedByWitch: false,
-          seerCheck: null,
-          hunterGesture: null,
-        };
+        if (!newState.readyPlayers) {
+          newState.readyPlayers = [];
+        }
+        // 如果玩家還沒準備，加入準備列表
+        if (!newState.readyPlayers.includes(action.playerId)) {
+          newState.readyPlayers.push(action.playerId);
+        }
+        
+        // 檢查是否所有玩家都準備好
+        const allPlayers = newState.players;
+        const readyCount = newState.readyPlayers.length;
+        const totalPlayers = allPlayers.length;
+        const allReady = allPlayers.every((p) => newState.readyPlayers!.includes(p.playerId));
+        
+        console.log(`[Ready] Player ${action.playerId} ready. Ready: ${readyCount}/${totalPlayers}, All ready: ${allReady}`);
+        
+        if (allReady && readyCount === totalPlayers && totalPlayers > 0) {
+          // 所有玩家都準備好後，進入首夜
+          console.log(`[Ready] All players ready, moving to night phase`);
+          newState.step = "night:wolves_attack";
+          newState.phase = "night_first";
+          newState.nightResult = {
+            killedByWolves: null,
+            killedByPoison: null,
+            savedByWitch: false,
+            savedByWitchTargetId: null,
+            seerCheck: null,
+            hunterGesture: null,
+            wolfVotes: {},
+          };
+          // 清除準備狀態（進入下一階段後不再需要）
+          newState.readyPlayers = undefined;
+        } else {
+          console.log(`[Ready] Not all players ready yet. Ready: ${readyCount}/${totalPlayers}`);
+        }
       }
       break;
 
     case "wolf:kill":
       if (player.role === "werewolf" && newState.nightResult) {
         const targetId = action.payload.targetId as string;
-        newState.nightResult.killedByWolves = targetId;
-        // 檢查是否所有狼人都投票了（簡化：只要有一個狼人投票就進入下一步）
-        newState.step = "night:witch_decide";
+        
+        // 初始化 wolfVotes 如果不存在
+        if (!newState.nightResult.wolfVotes) {
+          newState.nightResult.wolfVotes = {};
+        }
+        
+        // 記錄這個狼人的選擇（如果是改票，會覆蓋之前的選擇）
+        newState.nightResult.wolfVotes[action.playerId] = targetId;
+        
+        // 如果是在確認階段改票，清除這個狼人的確認狀態
+        if (newState.step === "night:wolves_confirm") {
+          if (newState.nightResult.wolfConfirmations) {
+            delete newState.nightResult.wolfConfirmations[action.playerId];
+          }
+        }
+        
+        // 檢查是否所有存活的狼人都投票了
+        const aliveWerewolves = newState.players.filter((p) => p.alive && p.role === "werewolf");
+        const votedWerewolves = Object.keys(newState.nightResult.wolfVotes);
+        
+        if (votedWerewolves.length >= aliveWerewolves.length) {
+          // 所有狼人都投票了，決定最終目標
+          // 計算票數（如果有多個狼人選擇不同目標，選擇得票最多的）
+          const voteCounts: Record<string, number> = {};
+          for (const targetId of Object.values(newState.nightResult.wolfVotes)) {
+            voteCounts[targetId] = (voteCounts[targetId] || 0) + 1;
+          }
+          
+          // 找出得票最多的目標
+          let maxVotes = 0;
+          let finalTarget: string | null = null;
+          for (const [targetId, votes] of Object.entries(voteCounts)) {
+            if (votes > maxVotes) {
+              maxVotes = votes;
+              finalTarget = targetId;
+            }
+          }
+          
+          // 如果平票，選擇第一個投票的目標（或可以隨機選擇）
+          if (!finalTarget && Object.keys(voteCounts).length > 0) {
+            finalTarget = Object.keys(voteCounts)[0];
+          }
+          
+          newState.nightResult.killedByWolves = finalTarget;
+          
+          // 如果是在投票階段，進入確認階段；如果是在確認階段改票，保持在確認階段
+          if (newState.step === "night:wolves_attack") {
+            newState.step = "night:wolves_confirm";
+          }
+          // 如果已經在確認階段，保持在確認階段（允許改票）
+        }
+        // 如果還有狼人沒投票，保持當前階段，等待其他狼人
+      }
+      break;
+
+    case "wolf:confirm":
+      if (player.role === "werewolf" && newState.nightResult) {
+        // 初始化確認記錄
+        if (!newState.nightResult.wolfConfirmations) {
+          newState.nightResult.wolfConfirmations = {};
+        }
+
+        newState.nightResult.wolfConfirmations[action.playerId] = true;
+
+        // 當所有存活狼人都按下確認，才進入女巫階段
+        const aliveWerewolvesForConfirm = newState.players.filter(
+          (p) => p.alive && p.role === "werewolf"
+        );
+        const confirmedWerewolves = Object.keys(newState.nightResult.wolfConfirmations);
+
+        if (confirmedWerewolves.length >= aliveWerewolvesForConfirm.length) {
+          newState.step = "night:witch_decide";
+        }
       }
       break;
 
     case "witch:save":
       if (player.role === "witch" && newState.nightResult && !player.witchSaveUsed) {
+        const targetId = newState.nightResult.killedByWolves;
         newState.nightResult.savedByWitch = true;
+        newState.nightResult.savedByWitchTargetId = targetId; // 記錄銀水
         newState.nightResult.killedByWolves = null;
         player.witchSaveUsed = true;
         newState.step = "night:seer_check";
@@ -355,7 +531,13 @@ export function applyAction(state: GameState, action: GameAction): GameState {
           playerId: action.playerId,
           gesture: player.hunterGesture,
         };
-        // 進入警長競選階段（首夜）或天亮（之後的夜晚）
+        // 不立即進入下一階段，等待玩家確認
+      }
+      break;
+
+    case "hunter:confirm_gesture":
+      if (player.role === "hunter" && player.hunterGesture !== null) {
+        // 確認後進入警長競選階段（首夜）或天亮（之後的夜晚）
         if (newState.phase === "night_first") {
           newState.step = "sheriff:collect_candidates";
           newState.phase = "sheriff_election";
@@ -364,6 +546,8 @@ export function applyAction(state: GameState, action: GameAction): GameState {
             speechOrder: [],
             currentSpeechIndex: 0,
             votes: {},
+            playerChoices: {},
+            withdrawn: [],
           };
         } else {
           newState.step = "day:apply_night_deaths";
@@ -373,29 +557,68 @@ export function applyAction(state: GameState, action: GameAction): GameState {
       break;
 
     case "sheriff:run":
-      if (newState.sheriffElection && !newState.sheriffElection.candidates.includes(action.playerId)) {
-        newState.sheriffElection.candidates.push(action.playerId);
+      if (newState.sheriffElection) {
+        // 記錄玩家的選擇
+        if (!newState.sheriffElection.playerChoices) {
+          newState.sheriffElection.playerChoices = {};
+        }
+        newState.sheriffElection.playerChoices[action.playerId] = "run";
+        
+        // 如果還沒在候選人名單中，加入
+        if (!newState.sheriffElection.candidates.includes(action.playerId)) {
+          newState.sheriffElection.candidates.push(action.playerId);
+        }
       }
       break;
 
     case "sheriff:skip":
-      // 收集候選人階段，如果所有人都選擇完畢，進入下一階段
-      // 簡化：假設有至少一人參選後，由系統決定進入下一階段
-      if (newState.sheriffElection && newState.sheriffElection.candidates.length > 0) {
-        // 隨機決定發言順序
-        const candidates = [...newState.sheriffElection.candidates];
-        for (let i = candidates.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+      if (newState.sheriffElection) {
+        // 記錄玩家的選擇
+        if (!newState.sheriffElection.playerChoices) {
+          newState.sheriffElection.playerChoices = {};
         }
-        newState.sheriffElection.speechOrder = candidates;
-        newState.sheriffElection.currentSpeechIndex = 0;
-        newState.step = "sheriff:speeches";
-      } else if (newState.sheriffElection && newState.sheriffElection.candidates.length === 0) {
-        // 無人參選，跳過警長競選
-        newState.step = "day:apply_night_deaths";
-        newState.phase = "day";
-        newState.sheriffElection = null;
+        newState.sheriffElection.playerChoices[action.playerId] = "skip";
+        
+        // 如果玩家在候選人名單中，移除（允許改選）
+        const candidateIndex = newState.sheriffElection.candidates.indexOf(action.playerId);
+        if (candidateIndex > -1) {
+          newState.sheriffElection.candidates.splice(candidateIndex, 1);
+        }
+      }
+      break;
+
+    case "sheriff:confirm_collect":
+      if (newState.sheriffElection) {
+        // 檢查是否所有人都已選擇
+        const alivePlayers = newState.players.filter((p) => p.alive);
+        const playerChoices = newState.sheriffElection.playerChoices || {};
+        const allSelected = alivePlayers.every((p) => playerChoices[p.playerId] !== undefined);
+        
+        if (!allSelected) {
+          throw new Error("還有玩家未選擇");
+        }
+        
+        // 如果有候選人，進入發言階段；如果沒有，跳過警長競選
+        if (newState.sheriffElection.candidates.length > 0) {
+          // 初始化 withdrawn 陣列
+          if (!newState.sheriffElection.withdrawn) {
+            newState.sheriffElection.withdrawn = [];
+          }
+          // 隨機決定發言順序
+          const candidates = [...newState.sheriffElection.candidates];
+          for (let i = candidates.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+          }
+          newState.sheriffElection.speechOrder = candidates;
+          newState.sheriffElection.currentSpeechIndex = 0;
+          newState.step = "sheriff:speeches";
+        } else {
+          // 無人參選，跳過警長競選
+          newState.step = "day:apply_night_deaths";
+          newState.phase = "day";
+          newState.sheriffElection = null;
+        }
       }
       break;
 
@@ -403,18 +626,62 @@ export function applyAction(state: GameState, action: GameAction): GameState {
       if (newState.sheriffElection) {
         newState.sheriffElection.currentSpeechIndex++;
         if (newState.sheriffElection.currentSpeechIndex >= newState.sheriffElection.speechOrder.length) {
-          newState.step = "sheriff:voting";
+          // 所有發言完後，進入退水階段
+          newState.step = "sheriff:withdraw_after_speeches";
+        }
+      }
+      break;
+
+    case "sheriff:withdraw":
+      if (newState.sheriffElection) {
+        // 確保 withdrawn 陣列存在
+        if (!newState.sheriffElection.withdrawn) {
+          newState.sheriffElection.withdrawn = [];
+        }
+        // 如果還沒退水，加入退水列表
+        if (!newState.sheriffElection.withdrawn.includes(action.playerId)) {
+          newState.sheriffElection.withdrawn.push(action.playerId);
+        }
+        // 從候選人列表中移除
+        const candidateIndex = newState.sheriffElection.candidates.indexOf(action.playerId);
+        if (candidateIndex > -1) {
+          newState.sheriffElection.candidates.splice(candidateIndex, 1);
+        }
+        // 從發言順序中移除
+        const speechIndex = newState.sheriffElection.speechOrder.indexOf(action.playerId);
+        if (speechIndex > -1) {
+          newState.sheriffElection.speechOrder.splice(speechIndex, 1);
+          // 如果退水的是當前發言者或之前的發言者，需要調整 currentSpeechIndex
+          if (speechIndex <= newState.sheriffElection.currentSpeechIndex) {
+            newState.sheriffElection.currentSpeechIndex = Math.max(0, newState.sheriffElection.currentSpeechIndex - 1);
+          }
+        }
+        // 如果在發言階段且所有候選人都退水了，跳過投票階段
+        if (newState.step === "sheriff:speeches" && newState.sheriffElection.candidates.length === 0) {
+          newState.step = "day:apply_night_deaths";
+          newState.phase = "day";
+          newState.sheriffElection = null;
         }
       }
       break;
 
     case "sheriff:vote":
       if (newState.sheriffElection) {
+        // 驗證：只有警下玩家（不在候選人列表且不在退水列表）可以投票
+        const isCandidate = newState.sheriffElection.candidates.includes(action.playerId);
+        const isWithdrawn = newState.sheriffElection.withdrawn?.includes(action.playerId) || false;
+        if (isCandidate || isWithdrawn) {
+          throw new Error("候選人和退水玩家不能投票");
+        }
+        
         const candidateId = action.payload.candidateId as string;
         newState.sheriffElection.votes[action.playerId] = candidateId;
-        // 檢查是否所有人都投票了
+        // 檢查是否所有警下玩家都投票了
         const alivePlayers = newState.players.filter((p) => p.alive);
-        const voters = alivePlayers.filter((p) => !newState.sheriffElection!.candidates.includes(p.playerId));
+        const voters = alivePlayers.filter((p) => 
+          !newState.sheriffElection!.candidates.includes(p.playerId) &&
+          !newState.sheriffElection!.withdrawn?.includes(p.playerId)
+        );
         if (Object.keys(newState.sheriffElection.votes).length >= voters.length) {
           // 計算票數（警長 1.5 票）
           const voteCounts: Record<string, number> = {};
@@ -588,8 +855,10 @@ export function applyAction(state: GameState, action: GameAction): GameState {
                   killedByWolves: null,
                   killedByPoison: null,
                   savedByWitch: false,
+                  savedByWitchTargetId: null,
                   seerCheck: null,
                   hunterGesture: null,
+                  wolfVotes: {},
                 };
                 newState.dayVoting = null;
               }
@@ -603,8 +872,10 @@ export function applyAction(state: GameState, action: GameAction): GameState {
             killedByWolves: null,
             killedByPoison: null,
             savedByWitch: false,
+            savedByWitchTargetId: null,
             seerCheck: null,
             hunterGesture: null,
+            wolfVotes: {},
           };
           newState.dayVoting = null;
         }
@@ -621,7 +892,7 @@ export function applyAction(state: GameState, action: GameAction): GameState {
 /**
  * 生成玩家視角
  */
-export function getPlayerView(state: GameState, playerId: string): PlayerView {
+export function getPlayerView(state: GameState, playerId: string, hostPlayerId?: string): PlayerView {
   const player = state.players.find((p) => p.playerId === playerId);
   if (!player) {
     throw new Error("玩家不存在");
@@ -630,8 +901,10 @@ export function getPlayerView(state: GameState, playerId: string): PlayerView {
   const alivePlayers = state.players.filter((p) => p.alive);
   const deadPlayers = state.players.filter((p) => !p.alive);
 
-  const nightDeaths: Array<{ playerId: string; nickname: string; cause: "wolf" | "poison" | "vote" | "hunter" }> = [];
-  if (state.nightResult) {
+  const nightDeaths: Array<{ playerId: string; nickname: string; cause: "wolf" | "poison" | "vote" | "hunter" }> =
+    [];
+  // 昨晚死亡資訊只在白天階段公開，夜晚僅女巫透過 nightInfo 查看
+  if (state.phase === "day" && state.nightResult) {
     if (state.nightResult.killedByWolves && !state.nightResult.savedByWitch) {
       const killed = state.players.find((p) => p.playerId === state.nightResult!.killedByWolves);
       if (killed) {
@@ -644,6 +917,57 @@ export function getPlayerView(state: GameState, playerId: string): PlayerView {
         nightDeaths.push({ playerId: killed.playerId, nickname: killed.nickname, cause: "poison" });
       }
     }
+  }
+
+  // 狼人專用資訊（只在是狼人時提供）
+  let wolfInfo:
+    | {
+        votes: Array<{
+          wolfId: string;
+          wolfSeatNumber: number;
+          wolfNickname: string;
+          targetId: string | null;
+          targetSeatNumber: number | null;
+          targetNickname: string | null;
+        }>;
+        finalTargetId: string | null;
+        confirmations: Array<{
+          wolfId: string;
+          wolfSeatNumber: number;
+          wolfNickname: string;
+          confirmed: boolean;
+        }>;
+      }
+    | undefined;
+
+  if (player.role === "werewolf" && state.nightResult?.wolfVotes) {
+    const votes = Object.entries(state.nightResult.wolfVotes).map(([wolfId, targetId]) => {
+      const wolf = state.players.find((p) => p.playerId === wolfId);
+      const target = targetId ? state.players.find((p) => p.playerId === targetId) : undefined;
+      return {
+        wolfId,
+        wolfSeatNumber: wolf?.seatNumber ?? 0,
+        wolfNickname: wolf?.nickname ?? "未知",
+        targetId: targetId || null,
+        targetSeatNumber: target?.seatNumber ?? null,
+        targetNickname: target?.nickname ?? null,
+      };
+    });
+
+    // 取得所有存活狼人的確認狀態
+    const aliveWerewolves = state.players.filter((p) => p.alive && p.role === "werewolf");
+    const confirmations = aliveWerewolves.map((wolf) => ({
+      wolfId: wolf.playerId,
+      wolfSeatNumber: wolf.seatNumber,
+      wolfNickname: wolf.nickname,
+      confirmed: state.nightResult?.wolfConfirmations?.[wolf.playerId] === true,
+    }));
+
+    wolfInfo = {
+      votes,
+      finalTargetId: state.nightResult.killedByWolves ?? null,
+      confirmations,
+    };
   }
 
   return {
@@ -673,6 +997,7 @@ export function getPlayerView(state: GameState, playerId: string): PlayerView {
           }
         : null,
       dayVoting: state.dayVoting,
+      readyPlayers: state.step === "setup:reveal_roles" ? state.readyPlayers : undefined,
     },
     private: {
       playerId: player.playerId,
@@ -690,9 +1015,12 @@ export function getPlayerView(state: GameState, playerId: string): PlayerView {
           ? {
               killedByWolves: state.nightResult.killedByWolves,
               killedByPoison: state.nightResult.killedByPoison,
+              savedByWitchTargetId: state.nightResult.savedByWitchTargetId,
             }
           : null,
+      wolfInfo,
+      sheriffChoice: state.sheriffElection?.playerChoices?.[playerId] || null,
     },
-    availableActions: getAvailableActions(state, playerId),
+    availableActions: getAvailableActions(state, playerId, hostPlayerId),
   };
 }

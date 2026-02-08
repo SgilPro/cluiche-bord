@@ -8,12 +8,14 @@ export type StepId =
   | "setup:assign_roles"
   | "setup:reveal_roles"
   | "night:wolves_attack"
+  | "night:wolves_confirm"
   | "night:witch_decide"
   | "night:seer_check"
   | "night:hunter_check_gesture"
   | "sheriff:collect_candidates"
   | "sheriff:randomize_order"
   | "sheriff:speeches"
+  | "sheriff:withdraw_after_speeches"
   | "sheriff:voting"
   | "day:apply_night_deaths"
   | "day:announce_deaths"
@@ -61,9 +63,10 @@ export interface WerewolfOptions {
 }
 
 export interface NightResult {
-  killedByWolves: string | null; // playerId
+  killedByWolves: string | null; // playerId (最終決定)
   killedByPoison: string | null; // playerId
   savedByWitch: boolean;
+  savedByWitchTargetId: string | null; // playerId，被女巫救的玩家（銀水）
   seerCheck: {
     playerId: string;
     targetId: string;
@@ -73,6 +76,8 @@ export interface NightResult {
     playerId: string;
     gesture: "good" | "bad";
   } | null;
+  wolfVotes?: Record<string, string>; // 狼人的投票記錄 { playerId: targetId }
+  wolfConfirmations?: Record<string, boolean>; // 狼人是否已確認最終目標
 }
 
 export interface GameAction {
@@ -91,12 +96,16 @@ export interface GameState {
   nightResult: NightResult | null;
   history: GameAction[];
   winner: "werewolves" | "villagers" | null;
+  readyPlayers?: string[]; // 已準備的玩家 playerId 陣列
   // 警長競選相關
   sheriffElection: {
     candidates: string[]; // playerId[]
     speechOrder: string[]; // playerId[]，發言順序
     currentSpeechIndex: number;
     votes: Record<string, string>; // playerId -> candidateId
+    playerChoices?: Record<string, "run" | "skip">; // 記錄每個玩家的選擇狀態
+    withdrawn: string[]; // playerId[]，退水的玩家（不能投票）
+    hostPlayerId?: string; // 房主 playerId（用於確認操作）
   } | null;
   // 白天投票相關
   dayVoting: {
@@ -138,12 +147,17 @@ export interface PlayerView {
       candidates: string[];
       currentSpeaker: string | null;
       votes: Record<string, string>;
+      collectStartTime?: number;
+      collectDuration?: number;
+      collectEnded?: boolean; // 倒數計時是否已結束
     } | null;
     // 白天投票狀態
     dayVoting: {
       votes: Record<string, string>;
       finished: boolean;
     } | null;
+    // 準備狀態（僅在 setup:reveal_roles 階段）
+    readyPlayers?: string[]; // 已準備的玩家 playerId 陣列
   };
   // 私有資訊（只有該玩家看得到）
   private: {
@@ -164,7 +178,28 @@ export interface PlayerView {
     nightInfo: {
       killedByWolves: string | null; // 女巫會看到
       killedByPoison: string | null; // 公開資訊
+      savedByWitchTargetId: string | null; // 銀水（被女巫救的玩家）
     } | null;
+    // 狼人資訊（僅狼人可見）
+    wolfInfo?: {
+      votes: Array<{
+        wolfId: string;
+        wolfSeatNumber: number;
+        wolfNickname: string;
+        targetId: string | null;
+        targetSeatNumber: number | null;
+        targetNickname: string | null;
+      }>;
+      finalTargetId: string | null;
+      confirmations: Array<{
+        wolfId: string;
+        wolfSeatNumber: number;
+        wolfNickname: string;
+        confirmed: boolean;
+      }>;
+    };
+    // 警長競選選擇狀態（僅該玩家可見）
+    sheriffChoice?: "run" | "skip" | null;
   };
   // 可用操作
   availableActions: Array<{

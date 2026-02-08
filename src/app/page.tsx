@@ -13,12 +13,11 @@ interface Room {
 
 export default function HomePage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"games" | "rooms">("games");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [roomName, setRoomName] = useState("");
   const [roomCode, setRoomCode] = useState("");
-  const [maxPlayers, setMaxPlayers] = useState(10);
+  const maxPlayers = 10; // 狼人殺固定 10 人
   const [rooms, setRooms] = useState<Room[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -37,11 +36,9 @@ export default function HomePage() {
   };
 
   useEffect(() => {
-    if (activeTab === "rooms") {
-      setIsLoading(true);
-      fetchRooms();
-    }
-  }, [activeTab]);
+    setIsLoading(true);
+    fetchRooms();
+  }, []);
 
   const handleCreateRoom = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,7 +58,6 @@ export default function HomePage() {
       if (data.success) {
         setShowCreateModal(false);
         setRoomName("");
-        setMaxPlayers(4);
         await fetchRooms();
         router.push(`/game/${data.room.id}`);
       }
@@ -86,55 +82,8 @@ export default function HomePage() {
         </p>
       </section>
 
-      {/* Tab 切換 */}
-      <div className="mb-8">
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8">
-            <button
-              onClick={() => setActiveTab("games")}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "games"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              熱門遊戲
-            </button>
-            <button
-              onClick={() => setActiveTab("rooms")}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "rooms"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              遊戲房間
-            </button>
-          </nav>
-        </div>
-      </div>
-
-      {/* 熱門遊戲內容 */}
-      {activeTab === "games" && (
-        <section className="mb-8">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <div className="rounded-lg bg-white p-6 shadow-md">
-              <h3 className="mb-2 text-xl font-semibold">遊戲名稱</h3>
-              <p className="mb-4 text-gray-600">遊戲簡介...</p>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500">2-4 人</span>
-                <button className="rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600">
-                  加入遊戲
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
       {/* 遊戲房間內容 */}
-      {activeTab === "rooms" && (
-        <section className="mb-8">
+      <section className="mb-8">
           <div className="flex justify-end mb-6">
             <div className="flex gap-4">
               <button
@@ -183,7 +132,6 @@ export default function HomePage() {
             )}
           </div>
         </section>
-      )}
 
       {/* 建立房間的 Modal */}
       {showCreateModal && (
@@ -206,19 +154,11 @@ export default function HomePage() {
               </div>
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-2">
-                  最大玩家數（狼人殺需要 10 人）
+                  遊戲類型
                 </label>
-                <select
-                  value={maxPlayers}
-                  onChange={(e) => setMaxPlayers(Number(e.target.value))}
-                  className="w-full px-3 py-2 border rounded-lg"
-                >
-                  <option value="10">10 人（狼人殺）</option>
-                  <option value="2">2 人</option>
-                  <option value="4">4 人</option>
-                  <option value="6">6 人</option>
-                  <option value="8">8 人</option>
-                </select>
+                <div className="w-full px-3 py-2 bg-gray-50 border rounded-lg text-gray-700">
+                  狼人殺 10 人局（警長局）
+                </div>
               </div>
               <div className="flex justify-end gap-2">
                 <button

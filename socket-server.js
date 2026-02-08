@@ -8,7 +8,12 @@ const {
   checkVictory,
 } = require("./src/lib/games/werewolf/engine");
 
-const prisma = new PrismaClient();
+// 針對 Supabase connection pooler，需要禁用 prepared statements
+// 這可以通過在 DATABASE_URL 中加入 ?pgbouncer=true 來解決
+// 或者使用 direct connection 而不是 pooler
+const prisma = new PrismaClient({
+  log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+});
 
 // 遊戲狀態管理：Map<roomId, GameState>
 const gameStates = new Map();
@@ -130,25 +135,57 @@ io.on("connection", (socket) => {
 
       socket.join(roomId);
       
+      // 取得更新後的房間資訊
+      const updatedRoom = await prisma.room.findUnique({ where: { id: roomId } });
+      const updatedPlayers = updatedRoom.players || [];
+      
+      // 判斷房主：第一個加入的玩家（players 陣列的第一個）
+      // 處理 players 可能是物件陣列的情況
+      let hostPlayerId = null;
+      if (Array.isArray(updatedPlayers) && updatedPlayers.length > 0) {
+        const firstPlayer = updatedPlayers[0];
+        if (typeof firstPlayer === "object" && firstPlayer !== null && firstPlayer.playerId) {
+          hostPlayerId = firstPlayer.playerId;
+        }
+      }
+
       // 如果已有遊戲狀態，發送當前狀態給新加入的玩家
       if (gameState) {
         const view = getPlayerView(gameState, playerId);
         socket.emit("game:state", view);
       } else {
-        // 發送房間資訊
-        const room = await prisma.room.findUnique({ where: { id: roomId } });
+        // 發送房間資訊（包含房主資訊）
         socket.emit("room:joined", {
           roomId,
-          players: room.players || [],
-          maxPlayers: room.maxPlayers,
+          players: updatedPlayers,
+          maxPlayers: updatedRoom.maxPlayers,
+          hostPlayerId,
         });
       }
 
-      // 通知房間內其他玩家
+      // 廣播房間更新給所有房間內的玩家（包括新加入的玩家）
+      io.to(roomId).emit("room:updated", {
+        roomId,
+        players: updatedPlayers,
+        maxPlayers: updatedRoom.maxPlayers,
+        hostPlayerId,
+      });
+
+      // 通知房間內其他玩家有新玩家加入
       socket.to(roomId).emit("user-joined", { roomId, playerId, nickname });
     } catch (error) {
       console.error(`Failed to join room ${roomId}:`, error);
-      socket.emit("error", { message: "加入房間失敗" });
+      console.error("Error details:", {
+        message: error?.message,
+        stack: error?.stack,
+        roomId,
+        playerId,
+        nickname
+      });
+      socket.emit("error", { 
+        message: "加入房間失敗",
+        details: error?.message || "Unknown error"
+      });
     }
   });
 
@@ -173,6 +210,23 @@ io.on("connection", (socket) => {
               players: updatedPlayers,
               lastActivity: new Date(),
             },
+          });
+
+          // 重新計算房主（第一個玩家）
+          let newHostPlayerId = null;
+          if (Array.isArray(updatedPlayers) && updatedPlayers.length > 0) {
+            const firstPlayer = updatedPlayers[0];
+            if (typeof firstPlayer === "object" && firstPlayer !== null && firstPlayer.playerId) {
+              newHostPlayerId = firstPlayer.playerId;
+            }
+          }
+
+          // 廣播房間更新
+          io.to(roomId).emit("room:updated", {
+            roomId,
+            players: updatedPlayers,
+            maxPlayers: room.maxPlayers,
+            hostPlayerId: newHostPlayerId,
           });
         }
         playerInfo.delete(socket.id);
@@ -201,6 +255,21 @@ io.on("connection", (socket) => {
       }
 
       const players = room.players || [];
+      
+      // 檢查房主權限
+      let hostPlayerId = null;
+      if (Array.isArray(players) && players.length > 0) {
+        const firstPlayer = players[0];
+        if (typeof firstPlayer === "object" && firstPlayer !== null && firstPlayer.playerId) {
+          hostPlayerId = firstPlayer.playerId;
+        }
+      }
+      
+      if (hostPlayerId !== info.playerId) {
+        socket.emit("error", { message: "只有房主可以開始遊戲" });
+        return;
+      }
+
       if (players.length !== 10) {
         socket.emit("error", { message: "需要正好 10 位玩家才能開始遊戲" });
         return;
@@ -353,6 +422,19 @@ io.on("connection", (socket) => {
               players: updatedPlayers,
               lastActivity: new Date(),
             },
+          });
+
+          // 重新計算房主
+          const newHostPlayerId = Array.isArray(updatedPlayers) && updatedPlayers.length > 0
+            ? (typeof updatedPlayers[0] === "object" ? updatedPlayers[0].playerId : updatedPlayers[0])
+            : null;
+
+          // 廣播房間更新
+          io.to(roomId).emit("room:updated", {
+            roomId,
+            players: updatedPlayers,
+            maxPlayers: room.maxPlayers,
+            hostPlayerId: newHostPlayerId,
           });
         }
         playerInfo.delete(socket.id);

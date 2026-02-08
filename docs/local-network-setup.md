@@ -35,13 +35,23 @@ ipconfig
 
 ```env
 # 將 YOUR_LOCAL_IP 替換為你的區域網路 IP
+# 基礎網址（用於 QR Code 和連結）
+NEXT_PUBLIC_BASE_URL=http://YOUR_LOCAL_IP:3000
+
+# Socket.IO 伺服器網址（用於即時通訊）
 NEXT_PUBLIC_SOCKET_URL=ws://YOUR_LOCAL_IP:4001
 ```
 
 **範例**：
 ```env
+NEXT_PUBLIC_BASE_URL=http://192.168.0.117:3000
 NEXT_PUBLIC_SOCKET_URL=ws://192.168.0.117:4001
 ```
+
+**重要**：
+- `NEXT_PUBLIC_BASE_URL`：用於 QR Code 和所有連結，讓其他設備可以掃描加入
+- `NEXT_PUBLIC_SOCKET_URL`：用於 Socket.IO 即時通訊連線
+- 兩個都必須設定為相同的 IP 位址
 
 ### 方法 B：臨時設定（每次啟動時）
 

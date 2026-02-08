@@ -84,6 +84,7 @@ model Room {
   name          String
   maxPlayers    Int
   players       Json      @default("[]") // 玩家ID陣列 (socket.id)
+  hostPlayerId  String?   // 房主的 playerId（第一個加入的玩家）
   createdAt     DateTime  @default(now())
   lastActivity  DateTime  @default(now()) @updatedAt
 

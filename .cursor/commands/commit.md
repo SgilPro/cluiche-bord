@@ -1,8 +1,8 @@
-# Commit 指令
+# Commit Command
 
-按照 Conventional Commits 格式撰寫 commit message。
+Generate commit messages following the Conventional Commits specification for staged changes only.
 
-## Conventional Commits 格式
+## Conventional Commits Format
 
 ```
 <type>[optional scope]: <description>
@@ -12,151 +12,169 @@
 [optional footer(s)]
 ```
 
-## Commit Type
+## Commit Types
 
-### 主要類型
+### Primary Types
 
-- **feat**: 新功能（feature）
-- **fix**: 修復 bug
-- **docs**: 文件變更
-- **style**: 程式碼格式變更（不影響功能，如縮排、分號等）
-- **refactor**: 重構（既不是新功能也不是修復 bug）
-- **perf**: 效能優化
-- **test**: 測試相關（新增或修改測試）
-- **chore**: 建置流程或輔助工具的變動（如依賴更新、配置變更）
-- **ci**: CI/CD 相關變更
-- **build**: 建置系統或外部依賴變更
-- **revert**: 回退先前的 commit
+- **feat**: A new feature
+- **fix**: A bug fix
+- **docs**: Documentation only changes
+- **style**: Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc.)
+- **refactor**: A code change that neither fixes a bug nor adds a feature
+- **perf**: A code change that improves performance
+- **test**: Adding missing tests or correcting existing tests
+- **chore**: Changes to the build process or auxiliary tools and libraries
+- **ci**: Changes to CI configuration files and scripts
+- **build**: Changes that affect the build system or external dependencies
+- **revert**: Reverts a previous commit
 
-### Scope（可選）
+### Scope (Optional)
 
-指定變更的範圍，例如：
-- `api`: API 相關
-- `ui`: 使用者介面
-- `db`: 資料庫
+Specify the area of the codebase affected, for example:
+- `api`: API related
+- `ui`: User interface
+- `db`: Database
 - `socket`: Socket.IO
-- `auth`: 認證相關
-- `game`: 遊戲邏輯
+- `auth`: Authentication
+- `game`: Game logic
 
-## 執行步驟
+## Execution Steps
 
-1. **檢查變更**
-   - 查看 `git status` 了解有哪些檔案變更
-   - 查看 `git diff` 了解具體變更內容
+1. **Check Staged Changes**
+   - Check `git status` to see what files are staged
+   - Review `git diff --cached` to understand the changes
+   - **Important**: Only staged changes will be analyzed. Unstaged changes are ignored.
 
-2. **選擇適當的 Type**
-   - 根據變更性質選擇對應的 type
-   - 如果是多種變更，選擇最主要的類型
+2. **Analyze Changes**
+   - Analyze the staged changes to understand the nature of modifications
+   - Identify the primary type of change
+   - Determine appropriate scope if applicable
 
-3. **撰寫 Commit Message**
-   - **標題**：使用 `<type>[scope]: <description>` 格式
-     - description 使用中文，簡潔描述變更內容
-     - 使用祈使語氣（如「新增」、「修復」、「更新」）
-     - 第一行不超過 72 字元
-   - **內文**（可選）：詳細說明變更原因和影響
-   - **Footer**（可選）：如 `BREAKING CHANGE:` 或 `Closes #123`
+3. **Generate Commit Message**
+   - **Subject**: Use `<type>[scope]: <description>` format
+     - Use imperative mood (e.g., "Add", "Fix", "Update")
+     - Keep subject line under 72 characters
+     - Do not end with a period
+   - **Body** (optional): Detailed explanation of what and why
+   - **Footer** (optional): Breaking changes or issue references (e.g., `BREAKING CHANGE:` or `Closes #123`)
 
-4. **範例**
+4. **Developer Confirmation**
+   - Present the proposed commit message to the developer
+   - Wait for explicit confirmation before executing the commit
+   - Allow developer to modify the message if needed
 
-   ```
-   feat(api): 新增房間建立 API 端點
-   
-   實作 POST /api/rooms 端點，支援建立新遊戲房間
-   包含輸入驗證和錯誤處理
-   ```
+5. **Execute Commit**
+   - Only proceed after developer confirmation
+   - Execute `git commit` with the confirmed message
 
-   ```
-   fix(socket): 修復房間加入時的重複連線問題
-   
-   當使用者重複加入同一房間時，會建立多個 socket 連線
-   現在會先檢查是否已存在連線，避免重複建立
-   ```
+## Examples
 
-   ```
-   refactor(game): 重構狼人殺遊戲引擎
-   
-   將遊戲邏輯拆分為更小的函式，提升可讀性和可測試性
-   不影響現有功能
-   ```
+```
+feat(api): add room creation endpoint
 
-   ```
-   docs: 更新 API 文件
-   ```
+Implement POST /api/rooms endpoint to support creating new game rooms
+Includes input validation and error handling
+```
 
-   ```
-   chore: 更新依賴套件版本
-   
-   - next: 15.0.0 -> 15.1.0
-   - prisma: 5.0.0 -> 5.1.0
-   ```
+```
+fix(socket): fix duplicate connection on room join
 
-## 執行方式
+When users repeatedly join the same room, multiple socket connections were created
+Now checks for existing connection before creating a new one
+```
 
-在 Agent 聊天框輸入 `/commit`，Agent 會：
+```
+refactor(game): refactor werewolf game engine
 
-1. 檢查 git 狀態和變更
-2. 分析變更內容
-3. 建議適當的 commit type 和 message
-4. 協助撰寫符合 Conventional Commits 格式的 commit message
+Split game logic into smaller functions for better readability and testability
+No functional changes
+```
 
-範例：
+```
+docs: update API documentation
+```
+
+```
+chore: update dependency versions
+
+- next: 15.0.0 -> 15.1.0
+- prisma: 5.0.0 -> 5.1.0
+```
+
+## Usage
+
+In the Agent chat, type `/commit`. The Agent will:
+
+1. Check git status and identify **staged changes only**
+2. Analyze the staged changes
+3. Generate an appropriate commit message following Conventional Commits format
+4. **Present the message for your review and confirmation**
+5. Execute the commit only after your explicit approval
+
+Example:
 ```
 /commit
 ```
 
-或指定特定檔案：
+**Note**: This command only processes staged changes. You must stage files using `git add` before running this command.
+
+## Important Notes
+
+- ✅ **Only staged changes are processed** - Unstaged changes are ignored
+- ✅ **Developer confirmation required** - Commit message must be approved before execution
+- ✅ Use imperative mood in subject line
+- ✅ Keep subject line under 72 characters
+- ✅ Separate body from subject with a blank line
+- ✅ Use `BREAKING CHANGE:` footer for breaking changes
+- ❌ Avoid past tense (e.g., "Added", "Fixed")
+- ❌ Do not end subject line with a period
+- ❌ Avoid overly brief descriptions (e.g., "fix bug")
+
+## Common Scenarios
+
+### New Feature
 ```
-/commit @src/app/api/rooms/route.ts
+feat(game): add werewolf game basic logic
+feat(ui): add game room chat functionality
+feat(api): add room list query API
 ```
 
-## 注意事項
-
-- ✅ 使用中文撰寫 commit message（符合專案規範）
-- ✅ 標題使用祈使語氣
-- ✅ 標題不超過 72 字元
-- ✅ 內文和標題之間空一行
-- ✅ 如果變更包含破壞性變更，使用 `BREAKING CHANGE:` footer
-- ❌ 避免使用過去式（如「新增了」、「修復了」）
-- ❌ 避免在標題結尾加句號
-- ❌ 避免過於簡短的描述（如「fix bug」）
-
-## 常見場景範例
-
-### 新功能
+### Bug Fix
 ```
-feat(game): 新增狼人殺遊戲基本邏輯
-feat(ui): 新增遊戲房間聊天功能
-feat(api): 新增房間列表查詢 API
+fix(socket): fix reconnection issue after disconnect
+fix(db): fix type error in room query
+fix(ui): fix chat message display order
 ```
 
-### 修復 Bug
+### Refactor
 ```
-fix(socket): 修復連線斷線後無法重連的問題
-fix(db): 修復房間查詢時的型別錯誤
-fix(ui): 修復聊天訊息顯示順序錯誤
-```
-
-### 重構
-```
-refactor(api): 重構房間 API 錯誤處理邏輯
-refactor(game): 提取遊戲狀態管理為獨立模組
+refactor(api): refactor room API error handling
+refactor(game): extract game state management to separate module
 ```
 
-### 文件
+### Documentation
 ```
-docs: 更新專案 README
-docs(api): 新增 API 使用說明文件
-```
-
-### 測試
-```
-test(game): 新增狼人殺遊戲引擎單元測試
-test(api): 新增房間 API 整合測試
+docs: update project README
+docs(api): add API usage documentation
 ```
 
-### 建置/工具
+### Tests
 ```
-chore: 更新 ESLint 配置
-chore: 更新依賴套件
-ci: 新增 GitHub Actions 工作流程
+test(game): add werewolf game engine unit tests
+test(api): add room API integration tests
 ```
+
+### Build/Tools
+```
+chore: update ESLint configuration
+chore: update dependencies
+ci: add GitHub Actions workflow
+```
+
+## Workflow
+
+1. Stage your changes: `git add <files>`
+2. Run the command: `/commit`
+3. Review the proposed commit message
+4. Confirm or request modifications
+5. Commit is executed only after your approval

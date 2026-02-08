@@ -19,7 +19,7 @@ export default function RoomsPage() {
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [roomName, setRoomName] = useState("");
   const [roomCode, setRoomCode] = useState("");
-  const [maxPlayers, setMaxPlayers] = useState(4);
+  const maxPlayers = 10; // 狼人殺固定 10 人
   const [rooms, setRooms] = useState<Room[]>([]);
 
   useEffect(() => {
@@ -126,19 +126,11 @@ export default function RoomsPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  最大玩家數
+                  遊戲類型
                 </label>
-                <select
-                  value={maxPlayers}
-                  onChange={(e) => setMaxPlayers(Number(e.target.value))}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-                >
-                  {[2, 3, 4, 5, 6].map((num) => (
-                    <option key={num} value={num}>
-                      {num} 人
-                    </option>
-                  ))}
-                </select>
+                <div className="mt-1 px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-gray-700">
+                  狼人殺 10 人局（警長局）
+                </div>
               </div>
               <div className="flex justify-end space-x-2">
                 <button
