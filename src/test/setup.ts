@@ -1,3 +1,5 @@
+import "@testing-library/jest-dom";
+
 /**
  * Vitest setup: mock WebSocket for Phoenix channel tests.
  * Phoenix Socket accepts opts.transport; we inject this mock in tests.
