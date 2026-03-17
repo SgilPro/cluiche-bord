@@ -1,210 +1,153 @@
 /**
- * 狼人殺遊戲型別定義
+ * Werewolf game state types for Channel state event and related payloads.
+ * Aligned with: cluiche-bord-elixir/specs/001-werewolf-engine/contracts/channel-events.md
+ * Flow: docs/werewolf-flow.mmd (phase / sub_phase values).
  */
 
-export type PhaseId = "setup" | "night_first" | "night_regular" | "sheriff_election" | "day" | "finished";
+// --- Phase & SubPhase (werewolf-flow.mmd + channel-events.md) ---
 
-export type StepId =
-  | "setup:assign_roles"
-  | "setup:reveal_roles"
-  | "night:wolves_attack"
-  | "night:wolves_confirm"
-  | "night:witch_decide"
-  | "night:seer_check"
-  | "night:hunter_check_gesture"
-  | "sheriff:collect_candidates"
-  | "sheriff:randomize_order"
-  | "sheriff:speeches"
-  | "sheriff:withdraw_after_speeches"
-  | "sheriff:voting"
-  | "day:apply_night_deaths"
-  | "day:announce_deaths"
-  | "day:hunter_night_shot"
-  | "day:speeches"
-  | "day:voting"
-  | "day:hunter_day_shot";
+export type Phase = "night" | "day";
 
-export type RoleId = "werewolf" | "seer" | "witch" | "hunter" | "villager";
+export const PHASES: Phase[] = ["night", "day"];
 
-export interface PlayerState {
-  playerId: string;
-  socketId: string; // Socket.IO socket.id
-  seatNumber: number; // 1..10，加入順序 = 座位順序
-  nickname: string;
-  role: RoleId | null; // null 表示尚未分配
+export type SubPhase =
+  | "wolves"
+  | "witch"
+  | "seer"
+  | "hunter_check"
+  | "sheriff_run"
+  | "sheriff_speech"
+  | "sheriff_final_withdraw"
+  | "sheriff_vote"
+  | "sheriff_tie_speech"
+  | "sheriff_tie_vote"
+  | "announce_deaths"
+  | "last_word"
+  | "speech"
+  | "vote"
+  | "hunter_shoot"
+  | "sheriff_handover";
+
+export const SUB_PHASES: SubPhase[] = [
+  "wolves",
+  "witch",
+  "seer",
+  "hunter_check",
+  "sheriff_run",
+  "sheriff_speech",
+  "sheriff_final_withdraw",
+  "sheriff_vote",
+  "sheriff_tie_speech",
+  "sheriff_tie_vote",
+  "announce_deaths",
+  "last_word",
+  "speech",
+  "vote",
+  "hunter_shoot",
+  "sheriff_handover",
+];
+
+// --- Role (contract: role visible only to self / wolves) ---
+
+export type RoleId = "seer" | "witch" | "hunter" | "wolf" | "villager";
+
+// --- Player ---
+
+export interface Player {
+  id: string;
   alive: boolean;
-  isSheriff: boolean;
-  hunterGesture: "good" | "bad" | null; // null 表示尚未設定
-  // 女巫狀態
-  witchSaveUsed: boolean;
-  witchPoisonUsed: boolean;
-  // 預言家查驗記錄（私有）
-  seerChecks: Array<{ targetId: string; result: "werewolf" | "villager" }>;
+  role: RoleId | null;
+  seat_index: number;
 }
 
-export interface WerewolfOptions {
-  sheriff: {
-    enabled: boolean;
-    voteWeight: number; // 1.5
-    transferOnDeath: "always";
-    transferMode: "self_choose";
-  };
-  witch: {
-    canSelfSave: boolean; // V1: false
-    totalSaveCount: number; // V1: 1
-    totalPoisonCount: number; // V1: 1
-    canUseBothInSameNight: boolean; // V1: false
-  };
-  hunter: {
-    canShootWhenVoted: boolean; // true
-    canShootWhenKilledAtNight: boolean; // true
-    canShootWhenPoisoned: boolean; // false
-  };
-}
-
-export interface NightResult {
-  killedByWolves: string | null; // playerId (最終決定)
-  killedByPoison: string | null; // playerId
-  savedByWitch: boolean;
-  savedByWitchTargetId: string | null; // playerId，被女巫救的玩家（銀水）
-  seerCheck: {
-    playerId: string;
-    targetId: string;
-    result: "werewolf" | "villager";
-  } | null;
-  hunterGesture: {
-    playerId: string;
-    gesture: "good" | "bad";
-  } | null;
-  wolfVotes?: Record<string, string>; // 狼人的投票記錄 { playerId: targetId }
-  wolfConfirmations?: Record<string, boolean>; // 狼人是否已確認最終目標
-}
-
-export interface GameAction {
-  type: string; // 如 "wolf:kill", "witch:save", "seer:check", "vote", "hunter:shoot" 等
-  playerId: string;
-  payload: Record<string, unknown>;
-  timestamp: number;
-}
+// --- GameState (state event payload) ---
 
 export interface GameState {
-  roomId: string;
-  phase: PhaseId;
-  step: StepId | null;
-  players: PlayerState[];
-  options: WerewolfOptions;
-  nightResult: NightResult | null;
-  history: GameAction[];
-  winner: "werewolves" | "villagers" | null;
-  readyPlayers?: string[]; // 已準備的玩家 playerId 陣列
-  // 警長競選相關
-  sheriffElection: {
-    candidates: string[]; // playerId[]
-    speechOrder: string[]; // playerId[]，發言順序
-    currentSpeechIndex: number;
-    votes: Record<string, string>; // playerId -> candidateId
-    playerChoices?: Record<string, "run" | "skip">; // 記錄每個玩家的選擇狀態
-    withdrawn: string[]; // playerId[]，退水的玩家（不能投票）
-    hostPlayerId?: string; // 房主 playerId（用於確認操作）
-  } | null;
-  // 白天投票相關
-  dayVoting: {
-    votes: Record<string, string>; // playerId -> targetId
-    finished: boolean;
-  } | null;
-  // 獵人開槍相關
-  hunterShot: {
-    playerId: string;
-    targetId: string | null; // null 表示尚未選擇
-  } | null;
+  phase: Phase;
+  sub_phase: SubPhase;
+  day_number: number;
+  players: Player[];
+  sheriff_id: string | null;
+  pending_death: string | null;
+  wolf_votes?: Record<string, string>;
+  wolf_locks?: string[];
+  timer_ends_at?: number;
+  last_word_ids?: string[];
+  last_word_index?: number;
+  last_word_current_id?: string | null;
 }
 
-export interface PlayerView {
-  // 公開資訊（所有人都看得到）
-  public: {
-    phase: PhaseId;
-    step: StepId | null;
-    alivePlayers: Array<{
-      playerId: string;
-      seatNumber: number;
-      nickname: string;
-      isSheriff: boolean;
-    }>;
-    deadPlayers: Array<{
-      playerId: string;
-      seatNumber: number;
-      nickname: string;
-      isSheriff: boolean;
-    }>;
-    nightDeaths: Array<{
-      playerId: string;
-      nickname: string;
-      cause: "wolf" | "poison" | "vote" | "hunter";
-    }>;
-    winner: "werewolves" | "villagers" | null;
-    // 警長競選狀態
-    sheriffElection: {
-      candidates: string[];
-      currentSpeaker: string | null;
-      votes: Record<string, string>;
-      collectStartTime?: number;
-      collectDuration?: number;
-      collectEnded?: boolean; // 倒數計時是否已結束
-    } | null;
-    // 白天投票狀態
-    dayVoting: {
-      votes: Record<string, string>;
-      finished: boolean;
-    } | null;
-    // 準備狀態（僅在 setup:reveal_roles 階段）
-    readyPlayers?: string[]; // 已準備的玩家 playerId 陣列
-  };
-  // 私有資訊（只有該玩家看得到）
-  private: {
-    playerId: string;
-    seatNumber: number;
-    nickname: string;
-    role: RoleId | null;
-    alive: boolean;
-    isSheriff: boolean;
-    // 預言家查驗記錄
-    seerChecks: Array<{ targetId: string; result: "werewolf" | "villager" }>;
-    // 獵人手勢
-    hunterGesture: "good" | "bad" | null;
-    // 女巫狀態
-    witchSaveUsed: boolean;
-    witchPoisonUsed: boolean;
-    // 夜晚資訊（僅限相關角色）
-    nightInfo: {
-      killedByWolves: string | null; // 女巫會看到
-      killedByPoison: string | null; // 公開資訊
-      savedByWitchTargetId: string | null; // 銀水（被女巫救的玩家）
-    } | null;
-    // 狼人資訊（僅狼人可見）
-    wolfInfo?: {
-      votes: Array<{
-        wolfId: string;
-        wolfSeatNumber: number;
-        wolfNickname: string;
-        targetId: string | null;
-        targetSeatNumber: number | null;
-        targetNickname: string | null;
-      }>;
-      finalTargetId: string | null;
-      confirmations: Array<{
-        wolfId: string;
-        wolfSeatNumber: number;
-        wolfNickname: string;
-        confirmed: boolean;
-      }>;
-    };
-    // 警長競選選擇狀態（僅該玩家可見）
-    sheriffChoice?: "run" | "skip" | null;
-  };
-  // 可用操作
-  availableActions: Array<{
-    type: string;
-    label: string;
-    payload?: Record<string, unknown>;
-  }>;
+// State event payload is the full game state
+export type StatePayload = GameState;
+
+// --- Server → Client event payloads ---
+
+export interface PhaseChangePayload {
+  phase: Phase;
+  sub_phase: SubPhase;
+}
+
+export interface SheriffElectedPayload {
+  sheriff_id: string;
+}
+
+export type DeathCause = "wolf" | "poison" | "vote";
+
+export interface DeathEntry {
+  player_id: string;
+  cause: DeathCause;
+}
+
+export interface DeathAnnouncementPayload {
+  deaths: DeathEntry[];
+}
+
+export type VictoryFaction = "villagers" | "wolves";
+
+export interface VictoryPayload {
+  faction: VictoryFaction;
+}
+
+export type RoleActionResultKind = "wolf" | "villager" | "no_kill";
+
+export interface RoleActionResultPayload {
+  result: RoleActionResultKind;
+  target_id: string;
+}
+
+// --- Type guards ---
+
+export function isPhase(x: unknown): x is Phase {
+  return typeof x === "string" && (x === "night" || x === "day");
+}
+
+export function isSubPhase(x: unknown): x is SubPhase {
+  return typeof x === "string" && SUB_PHASES.includes(x as SubPhase);
+}
+
+export function isPlayer(x: unknown): x is Player {
+  if (x === null || typeof x !== "object") return false;
+  const o = x as Record<string, unknown>;
+  return (
+    typeof o.id === "string" &&
+    typeof o.alive === "boolean" &&
+    (o.role === null ||
+      (typeof o.role === "string" &&
+        ["seer", "witch", "hunter", "wolf", "villager"].includes(o.role))) &&
+    typeof o.seat_index === "number"
+  );
+}
+
+export function isGameState(x: unknown): x is GameState {
+  if (x === null || typeof x !== "object") return false;
+  const o = x as Record<string, unknown>;
+  return (
+    isPhase(o.phase) &&
+    isSubPhase(o.sub_phase) &&
+    typeof o.day_number === "number" &&
+    Array.isArray(o.players) &&
+    o.players.every(isPlayer) &&
+    (o.sheriff_id === null || typeof o.sheriff_id === "string") &&
+    (o.pending_death === null || typeof o.pending_death === "string")
+  );
 }
