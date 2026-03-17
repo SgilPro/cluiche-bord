@@ -11,13 +11,14 @@
 Build in Next 16 App Router (e.g. `src/components/ui/` or `src/components/design-system/`):
 
 - [x] Buttons (primary, secondary, success, danger, segment) – `Button.tsx`
-- [ ] Cards / panels
+- [x] Cards / panels (`Card.tsx`)
 - [x] Player list item (avatar, name, status, host, empty slot) – `PlayerListItem.tsx`
 - [x] Room header / phase title – `Header.tsx` (default + werewolf variant)
 - [ ] Action panels (night/day actions)
-- [ ] Modals / overlays
+- [x] Modals / overlays (`Modal.tsx`)
 - [x] Form field with label and optional info icon – `FormField.tsx`
-- [ ] NotificationBanner, ActionBar, SegmentedControl (see style-guide)
+- [x] NotificationBanner, ActionBar (FixedBottomBar), SegmentedControl (see style-guide)
+- [x] Card, Modal (optional)
 
 Use Design Tokens (CSS variables in globals.css) and follow the Style Guide. Prefer server components where possible; client only where interactivity is required.
 

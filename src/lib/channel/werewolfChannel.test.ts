@@ -1,10 +1,23 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MockWebSocket } from "@/test/setup";
 import { createWerewolfChannel } from "./werewolfChannel";
+
+/** Phoenix Socket uses `new transport(url)`; we need a constructor that returns a MockWebSocket and exposes it. */
+let lastMockInstance: MockWebSocket | null = null;
+class MockTransport {
+  constructor(url: string) {
+    lastMockInstance = new MockWebSocket(url);
+    return lastMockInstance;
+  }
+}
 
 describe("werewolfChannel", () => {
   const defaultUrl = "ws://localhost:4000/socket";
   const token = "test-token-123";
+
+  beforeEach(() => {
+    lastMockInstance = null;
+  });
 
   /** After connect+join, deliver phx_reply so join resolves. Uses ref from last phx_join in sent. */
   function deliverJoinOk(mockWs: MockWebSocket, topic: string): void {
@@ -22,15 +35,14 @@ describe("werewolfChannel", () => {
 
   describe("connect", () => {
     it("connects with token and vsn in query when transport is provided", async () => {
-      const transport = vi.fn((url: string) => new MockWebSocket(url));
       const channel = createWerewolfChannel({
         url: defaultUrl,
         token,
-        transport: transport as unknown as typeof WebSocket,
+        transport: MockTransport as unknown as typeof WebSocket,
       });
       await channel.connect();
-      expect(transport).toHaveBeenCalledTimes(1);
-      const calledUrl = transport.mock.calls[0][0];
+      expect(lastMockInstance).toBeTruthy();
+      const calledUrl = lastMockInstance!.url;
       expect(calledUrl).toContain("token=test-token-123");
       expect(calledUrl).toContain("vsn=2.0.0");
       expect(calledUrl).toContain("/websocket");
@@ -40,15 +52,14 @@ describe("werewolfChannel", () => {
 
   describe("join", () => {
     it("joins topic werewolf:room:mock", async () => {
-      const transport = vi.fn((url: string) => new MockWebSocket(url));
       const channel = createWerewolfChannel({
         url: defaultUrl,
         token,
-        transport: transport as unknown as typeof WebSocket,
+        transport: MockTransport as unknown as typeof WebSocket,
       });
       await channel.connect();
       const joinPromise = channel.join("mock");
-      const mockWs = transport.mock.results[0].value as MockWebSocket;
+      const mockWs = lastMockInstance!;
       const joinMessage = mockWs.sent.find((s) => {
         const parsed = JSON.parse(s);
         return Array.isArray(parsed) && parsed[3] === "phx_join";
@@ -62,15 +73,14 @@ describe("werewolfChannel", () => {
     });
 
     it("joins topic werewolf:room:{roomId} for real room", async () => {
-      const transport = vi.fn((url: string) => new MockWebSocket(url));
       const channel = createWerewolfChannel({
         url: defaultUrl,
         token,
-        transport: transport as unknown as typeof WebSocket,
+        transport: MockTransport as unknown as typeof WebSocket,
       });
       await channel.connect();
       const joinPromise = channel.join("room-abc");
-      const mockWs = transport.mock.results[0].value as MockWebSocket;
+      const mockWs = lastMockInstance!;
       const joinMessage = mockWs.sent.find((s) => {
         const parsed = JSON.parse(s);
         return Array.isArray(parsed) && parsed[3] === "phx_join";
@@ -86,15 +96,14 @@ describe("werewolfChannel", () => {
 
   describe("push", () => {
     it("push start_game sends correct event and payload", async () => {
-      const transport = vi.fn((url: string) => new MockWebSocket(url));
       const channel = createWerewolfChannel({
         url: defaultUrl,
         token,
-        transport: transport as unknown as typeof WebSocket,
+        transport: MockTransport as unknown as typeof WebSocket,
       });
       await channel.connect();
       const joinPromise = channel.join("mock");
-      const mockWs = transport.mock.results[0].value as MockWebSocket;
+      const mockWs = lastMockInstance!;
       deliverJoinOk(mockWs, "werewolf:room:mock");
       await joinPromise;
 
@@ -122,15 +131,14 @@ describe("werewolfChannel", () => {
 
   describe("listen", () => {
     it("receives state event and calls callback", async () => {
-      const transport = vi.fn((url: string) => new MockWebSocket(url));
       const channel = createWerewolfChannel({
         url: defaultUrl,
         token,
-        transport: transport as unknown as typeof WebSocket,
+        transport: MockTransport as unknown as typeof WebSocket,
       });
       await channel.connect();
       const joinPromise = channel.join("mock");
-      const mockWs = transport.mock.results[0].value as MockWebSocket;
+      const mockWs = lastMockInstance!;
       deliverJoinOk(mockWs, "werewolf:room:mock");
       await joinPromise;
 
