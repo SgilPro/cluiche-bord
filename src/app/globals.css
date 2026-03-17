@@ -1,8 +1,30 @@
 @import "tailwindcss";
 
+/* Design tokens from Figma (see docs/design-tokens.md) */
 :root {
-  --background: #e6f0ed;
-  --foreground: #2c3e50;
+  /* Backgrounds */
+  --background-primary: #1a1b26;
+  --background-surface: #ffffff;
+  --background-header-werewolf: #2f0000;
+  /* Accents */
+  --accent-primary: #ffc107;
+  --accent-secondary: #3d5afe;
+  --accent-blue: #00b0ff;
+  --accent-green: #00ccaa;
+  /* Actions */
+  --action-primary: #00e676;
+  --action-danger: #f23538;
+  --action-success: #00e676;
+  /* Text */
+  --text-primary: #000000;
+  --text-secondary: #a1a1aa;
+  --text-on-dark: #ffffff;
+  --text-on-primary: #000000;
+  /* UI */
+  --placeholder-avatar: #d9d9d9;
+  /* Legacy / fallback */
+  --background: var(--background-primary);
+  --foreground: var(--text-on-dark);
 }
 
 @theme inline {
@@ -15,6 +37,6 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
   min-height: 100vh;
 }

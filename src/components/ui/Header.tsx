@@ -1,0 +1,55 @@
+"use client";
+
+import { type ReactNode } from "react";
+
+export interface HeaderProps {
+  title: string;
+  /** Optional page title bar (e.g. "建立房間") with yellow bg */
+  pageTitle?: string;
+  /** Game screen: use dark red background */
+  variant?: "default" | "werewolf";
+  actionIcon?: ReactNode;
+  onActionClick?: () => void;
+}
+
+export default function Header({
+  title,
+  pageTitle,
+  variant = "default",
+  actionIcon,
+  onActionClick,
+}: HeaderProps) {
+  const bg =
+    variant === "werewolf"
+      ? "bg-[var(--background-header-werewolf)]"
+      : "bg-[var(--background-primary)]";
+  const titleColor =
+    variant === "werewolf"
+      ? "text-[var(--text-on-dark)]"
+      : "text-[var(--accent-primary)]";
+
+  return (
+    <header className={bg}>
+      <div className="flex items-center justify-between px-4 py-3">
+        <h1 className={`text-xl font-bold ${titleColor}`}>{title}</h1>
+        {actionIcon != null && (
+          <button
+            type="button"
+            onClick={onActionClick}
+            className="text-[var(--text-on-dark)] hover:opacity-80"
+            aria-label="操作"
+          >
+            {actionIcon}
+          </button>
+        )}
+      </div>
+      {pageTitle != null && (
+        <div className="bg-[var(--accent-primary)] px-4 py-2">
+          <h2 className="text-lg font-medium text-[var(--text-primary)]">
+            {pageTitle}
+          </h2>
+        </div>
+      )}
+    </header>
+  );
+}

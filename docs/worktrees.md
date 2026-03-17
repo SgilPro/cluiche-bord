@@ -35,4 +35,4 @@ git branch -D codex/<agent>/<topic>
 ## Notes
 - Keep `main` clean for integration.
 - Rebase from `origin/main` before opening a PR.
-- Coordinate when modifying shared files like `socket-server.ts`.
+- Coordinate when modifying shared files (e.g. layout, design tokens).
