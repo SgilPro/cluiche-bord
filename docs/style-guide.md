@@ -6,7 +6,8 @@ Patterns and components inferred from `spec/`. Use with `docs/design-tokens.md`.
 
 ## 1. App / Page structure
 
-- **Lobby (首頁):** Dark background, centered vertical stack of two CTAs (建立房間 yellow, 進入房間 blue). Title "Cluiche bord" top-left, light yellow.
+- **Mobile container:** All pages live inside `MobileContainer` — max-width 430px, centered on desktop. Mobile-first; on large screens the app looks like a phone frame.
+- **Lobby (首頁):** Dark background, centered vertical stack of two CTAs (建立房間 yellow, 進入房間 blue). Buttons use `max-w-[280px]`, not full-width. Title "Cluiche bord" top-left, light yellow, header has `border-b border-dotted border-[#323949]`.
 - **Form screens (建立房間):** Dark background; yellow horizontal bar with page title; form area with labeled inputs; footer with Cancel (red) + Confirm (green).
 - **Game / Waiting (等待加入頁):** Dark red header with game title and share icon; white content area (banner, segmented control, player list); fixed bottom bar with two full-width buttons (Leave red, Start green).
 
@@ -74,8 +75,12 @@ Reusable: `ActionBar` or `FixedBottomBar` with two `ActionButton` children (or s
 
 ## 8. Icons (from spec)
 
-- Plus (+), Enter/door, × (close), ○ (confirm), ?, Crown, Share (arrow in box), Reorder (two arrows), Pencil, Exit (arrow out), Play (outline circle).
-- Prefer a small icon set or SVG sprite; keep style consistent (outline vs fill).
+- Default icon set: `lucide-react`. Use outline variants for consistency.
+- Mapping used in this project (Cursor rule of thumb):
+  - Home: 建立房間 → `lucide/plus`, 進入房間 → `lucide/square-arrow-right` (\"square-arrow-right-enter\").
+  - Create room: info icon → `lucide/circle-help` (\"circle-question-mark\") next to label, gap-2, aligned with label text.
+  - Footer actions (建立房間頁): 確認建立 → `lucide/circle`, 取消建立 → `lucide/x`.
+  - Other icons from spec: Crown, Share, Reorder, Pencil, Exit, Play remain as needed, prefer matching lucide equivalents.
 
 ---
 

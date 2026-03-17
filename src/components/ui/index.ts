@@ -8,6 +8,8 @@ export { default as FixedBottomBar } from "./FixedBottomBar";
 export type { FixedBottomBarProps } from "./FixedBottomBar";
 export { default as Header } from "./Header";
 export type { HeaderProps } from "./Header";
+export { default as MobileContainer } from "./MobileContainer";
+export type { MobileContainerProps } from "./MobileContainer";
 export { default as Modal } from "./Modal";
 export type { ModalProps } from "./Modal";
 export { default as NotificationBanner } from "./NotificationBanner";

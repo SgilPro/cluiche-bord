@@ -144,7 +144,7 @@ export default function WaitingRoomPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center bg-[var(--background-primary)] px-6">
+      <main className="flex min-h-screen flex-col items-center justify-center px-6">
         <p className="text-[var(--text-secondary)]">載入中...</p>
       </main>
     );
@@ -152,7 +152,7 @@ export default function WaitingRoomPage() {
 
   if (error != null && room == null) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[var(--background-primary)] px-6">
+      <main className="flex min-h-screen flex-col items-center justify-center gap-4 px-6">
         <p className="text-[var(--action-danger)]">{error}</p>
         <Link
           href="/"
@@ -187,7 +187,7 @@ export default function WaitingRoomPage() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col bg-[var(--background-primary)] pb-24">
+    <div className="flex min-h-screen flex-col bg-[var(--background-primary)]">
       <Header
         title="Werewolf"
         variant="werewolf"
@@ -195,39 +195,43 @@ export default function WaitingRoomPage() {
         onActionClick={handleShare}
       />
 
-      <div className="flex flex-col gap-4 px-4 py-4">
-        {!bannerDismissed && (
-          <NotificationBanner
-            secondaryMessage="正在等待玩家加入房間..."
-            message={`目前人數 ${currentCount}/${maxCount} 人, 人數到齊後由房主按下開始遊戲`}
-            dismissible
-            onDismiss={() => setBannerDismissed(true)}
-          />
-        )}
+      <main className="flex-1 pb-24">
+        <div className="flex flex-col gap-4 px-4 py-4">
+          {!bannerDismissed && (
+            <NotificationBanner
+              secondaryMessage="正在等待玩家加入房間..."
+              message={`目前人數 ${currentCount}/${maxCount} 人, 人數到齊後由房主按下開始遊戲`}
+              dismissible
+              onDismiss={() => setBannerDismissed(true)}
+            />
+          )}
 
-        {isHost && (
-          <SegmentedControl
-            segments={segments}
-            activeId={segmentActive}
-            onSelect={setSegmentActive}
-          />
-        )}
-
-        <ul className="flex flex-col gap-2" role="list">
-          {slots.map(({ seatNumber, player }) => (
-            <li key={seatNumber}>
-              <PlayerListItem
-                seatNumber={seatNumber}
-                name={player?.nickname ?? null}
-                isHost={player?.user_id === room.host_user_id}
-                isEmpty={player == null}
+          {isHost && (
+            <div className="flex max-w-[320px]">
+              <SegmentedControl
+                segments={segments}
+                activeId={segmentActive}
+                onSelect={setSegmentActive}
               />
-            </li>
-          ))}
-        </ul>
-      </div>
+            </div>
+          )}
 
-      <FixedBottomBar>
+          <ul className="flex flex-col gap-2" role="list">
+            {slots.map(({ seatNumber, player }) => (
+              <li key={seatNumber}>
+                <PlayerListItem
+                  seatNumber={seatNumber}
+                  name={player?.nickname ?? null}
+                  isHost={player?.user_id === room.host_user_id}
+                  isEmpty={player == null}
+                />
+              </li>
+            ))}
+          </ul>
+        </div>
+      </main>
+
+      <FixedBottomBar className="bg-[var(--background-surface)]">
         <Button
           variant="danger"
           fullWidth
@@ -251,6 +255,6 @@ export default function WaitingRoomPage() {
           <div />
         )}
       </FixedBottomBar>
-    </main>
+    </div>
   );
 }

@@ -53,6 +53,12 @@
 | `overlay.green` | `#00E67699` | Success overlay (60%) | Figma |
 | `overlay.magenta` | `#EF60FF99` | Decorative (60%) | Figma |
 
+### Borders
+| Token | Value | Usage | Note |
+|-------|--------|--------|------|
+| `border.ticket.color` | `#323949` | Ticket-style separators (header, footer) | From spec |
+| `border.ticket.pattern` | `1px dashed (10px on, 10px off)` | Ticket edges / separators | Implemented via `border-image` |
+
 ### Other (Figma palette, for reference)
 - `#E8F0F8` – light blue tint
 - `#33063E` – dark purple

@@ -23,7 +23,7 @@ export default function FormField({
       <div className="flex items-center justify-between">
         <label
           htmlFor={fieldId}
-          className="text-sm font-medium text-[var(--text-secondary)]"
+          className="text-base font-bold text-[var(--text-secondary)]"
         >
           {label}
         </label>

@@ -34,7 +34,7 @@ export default function Button({
   ...props
 }: ButtonProps) {
   const base =
-    "inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-base font-medium transition-opacity disabled:opacity-50";
+    "inline-flex items-center justify-center gap-2 rounded-lg px-2 py-2 text-base font-bold transition-opacity disabled:opacity-50";
   const width = fullWidth ? "w-full" : "";
   const dataActive = variant === "segment" ? { "data-active": active } : {};
 

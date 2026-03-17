@@ -104,6 +104,7 @@
 - **E2E / Playwright:** Not in scope for this ticket set; can be a follow-up ticket after screens exist.
 - **Next viewport:** Build warns "Unsupported metadata viewport is configured in metadata export". Move viewport to a dedicated `viewport` export per Next.js docs (non-blocking).
 - **ESLint:** `PlayerListItem` uses `<img>` for avatar; Next suggests `next/image`. Non-blocking; can switch when optimizing.
+- **create-room 流程：** 建立成功頁的「進入房間」目前導向 `/game/[roomId]`。正確流程應為：建立成功 → 進入等待室 `/rooms/[roomId]` → 房主按開始遊戲後才進入 `/game/[roomId]`。若需修正，改 create-room success 的 Link 目標即可。
 
 ---
 

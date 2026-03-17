@@ -19,8 +19,8 @@
 | 04d Screens | — | Blocked (02, 03, 04b, 04c) | — | |
 | todo-01 Home + guard | — | Done | subagent | ✓ |
 | todo-02 Create room | — | Done | subagent | ✓ |
-| todo-03 Waiting room | codex/todo-03 @ .worktree/todo-03 | Pending | — | |
-| todo-04 Game phases | codex/todo-04 @ .worktree/todo-04 | Pending | — | |
+| todo-03 Waiting room | — | Done | subagent | ✓ |
+| todo-04 Game phases | — | Done | subagent | ✓ |
 
 ---
 
@@ -32,6 +32,8 @@
 - **03** → release/v0.1.0 (merge, resolved setup.ts + package.json): NotificationBanner, FixedBottomBar, SegmentedControl, Card, Modal; vitest unified (happy-dom for all tests, React plugin).
 - **todo-01** → release/v0.1.0 (fast-forward): home page align spec/首頁.png, /rooms guard (即將開放).
 - **todo-02** → release/v0.1.0 (fast-forward): create-room page (form + success state).
+- **todo-03** → release/v0.1.0 (merge): rooms/[roomId] waiting room, getUserId in API client.
+- **todo-04** → release/v0.1.0 (fast-forward): game phase components in components/pages, PhaseRouter in game page.
 
 ---
 

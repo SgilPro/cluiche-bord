@@ -6,6 +6,8 @@ export interface HeaderProps {
   title: string;
   /** Optional page title bar (e.g. "建立房間") with yellow bg */
   pageTitle?: string;
+  /** Alignment for pageTitle text (default: left) */
+  pageTitleAlign?: "left" | "center";
   /** Game screen: use dark red background */
   variant?: "default" | "werewolf";
   actionIcon?: ReactNode;
@@ -15,6 +17,7 @@ export interface HeaderProps {
 export default function Header({
   title,
   pageTitle,
+  pageTitleAlign = "left",
   variant = "default",
   actionIcon,
   onActionClick,
@@ -45,7 +48,11 @@ export default function Header({
       </div>
       {pageTitle != null && (
         <div className="bg-[var(--accent-primary)] px-4 py-2">
-          <h2 className="text-lg font-medium text-[var(--text-primary)]">
+          <h2
+            className={`text-lg font-medium text-[var(--text-primary)] ${
+              pageTitleAlign === "center" ? "text-center" : ""
+            }`}
+          >
             {pageTitle}
           </h2>
         </div>

@@ -24,6 +24,19 @@
   /* UI */
   --placeholder-avatar: #d9d9d9;
   --overlay-dark: #00000099;
+  /* Borders */
+  --border-ticket-color: #323949;
+  --border-ticket-dash: repeating-linear-gradient(
+    to right,
+    #323949 0,
+    #323949 10px,
+    transparent 10px,
+    transparent 20px
+  );
+  /* Mobile container (mobile-first, desktop centered) */
+  --mobile-container-max: 430px;
+  --mobile-container-px: 1rem;
+
   /* Legacy / fallback */
   --background: var(--background-primary);
   --foreground: var(--text-on-dark);
@@ -32,13 +45,21 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-space-grotesk);
   --font-mono: var(--font-geist-mono);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
   min-height: 100vh;
+}
+
+/* Ticket-style dashed border top (1px, 10/10 pattern, #323949) */
+.border-ticket-top {
+  border-top-width: 1px;
+  border-top-style: dashed;
+  border-top-color: var(--border-ticket-color);
+  border-image: var(--border-ticket-dash) 1;
 }
