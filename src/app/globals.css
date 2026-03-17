@@ -22,6 +22,7 @@
   --text-on-primary: #000000;
   /* UI */
   --placeholder-avatar: #d9d9d9;
+  --overlay-dark: #00000099;
   /* Legacy / fallback */
   --background: var(--background-primary);
   --foreground: var(--text-on-dark);
