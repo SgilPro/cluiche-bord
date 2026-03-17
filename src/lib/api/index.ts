@@ -4,6 +4,7 @@ export {
   getApiOrigin,
   getRoom,
   getToken,
+  getUserId,
   joinRoom,
   leaveRoom,
   listGameTypes,

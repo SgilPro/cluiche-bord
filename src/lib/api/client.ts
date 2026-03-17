@@ -55,6 +55,30 @@ export function setToken(token: string | null): void {
   }
 }
 
+const USER_ID_KEY = "cluiche_bord_user_id";
+
+export function getUserId(): string | null {
+  if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
+    try {
+      return localStorage.getItem(USER_ID_KEY);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+export function setUserId(userId: string | null): void {
+  if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
+    try {
+      if (userId === null) localStorage.removeItem(USER_ID_KEY);
+      else localStorage.setItem(USER_ID_KEY, userId);
+    } catch {
+      // ignore
+    }
+  }
+}
+
 type RequestOptions = Omit<RequestInit, "body"> & {
   method?: string;
   body?: unknown;
@@ -116,6 +140,7 @@ export async function createGuest(
     body: Object.keys(body).length ? body : {},
   });
   setToken(data.token);
+  setUserId(data.user_id);
   return data;
 }
 
