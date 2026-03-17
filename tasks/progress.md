@@ -12,17 +12,20 @@
 |--------|-------------------|--------|----------|--------|
 | 00 Cleanup | — | Done | main | ✓ (already on release) |
 | 02 Design Tokens & Style Guide | — | Done | main | ✓ (already on release) |
-| 03 Reusable Components | codex/ticket-03 @ .worktree/ticket-03 | In progress | subagent | |
-| 04a Auth & REST Client | codex/ticket-04a @ .worktree/ticket-04a | In progress | subagent | |
-| 04b Phoenix Channel Client | codex/ticket-04b @ .worktree/ticket-04b | In progress | subagent | |
-| 04c Game State Types | codex/ticket-04c @ .worktree/ticket-04c | In progress | subagent | |
+| 03 Reusable Components | codex/ticket-03 @ .worktree/ticket-03 | Done | subagent | ✓ |
+| 04a Auth & REST Client | codex/ticket-04a @ .worktree/ticket-04a | Done | subagent | ✓ |
+| 04b Phoenix Channel Client | codex/ticket-04b @ .worktree/ticket-04b | Done | subagent | ✓ |
+| 04c Game State Types | codex/ticket-04c @ .worktree/ticket-04c | Done | subagent | ✓ |
 | 04d Screens | — | Blocked (02, 03, 04b, 04c) | — | |
 
 ---
 
 ## Merge log
 
-- (none yet; first merge will be recorded here after code review)
+- **04c** → release/v0.1.0 (fast-forward): game state types + vitest.
+- **04a** → release/v0.1.0 (merge, resolved vitest.config.mjs): auth + REST client.
+- **04b** → release/v0.1.0 (merge, resolved package.json): Phoenix channel client; post-merge fix: channel tests use constructor for transport, single vitest.config.mjs, removed vitest.config.ts.
+- **03** → release/v0.1.0 (merge, resolved setup.ts + package.json): NotificationBanner, FixedBottomBar, SegmentedControl, Card, Modal; vitest unified (happy-dom for all tests, React plugin).
 
 ---
 

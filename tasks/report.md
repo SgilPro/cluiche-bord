@@ -114,11 +114,21 @@
 | 00 | Cleanup: remove Prisma, API, socket-server, old src | - | Done |
 | 01 | .openskills / Superpower usage report | - | Done (this report) |
 | 02 | Design Tokens & Style Guide from spec/ | - | Done (draft) |
-| 03 | Reusable components from spec/ | 02 | Started (Button, FormField, Header, PlayerListItem) |
-| 04a | Auth & REST client (guest, rooms) | 00 | Pending |
-| 04b | Phoenix Channel client (werewolf:room) | 00 | Pending |
-| 04c | Game state types (Channel state payload) | 04b | Pending |
+| 03 | Reusable components from spec/ | 02 | Done (merged) |
+| 04a | Auth & REST client (guest, rooms) | 00 | Done (merged) |
+| 04b | Phoenix Channel client (werewolf:room) | 00 | Done (merged) |
+| 04c | Game state types (Channel state payload) | 04b | Done (merged) |
 | 04d | Screens: Lobby, Night, Sheriff, Day (split or single) | 02, 03, 04b | Pending |
+
+---
+
+## 7. Subagent / Worktree Run (this session)
+
+- **Progress:** `tasks/progress.md` created; worktrees at `.worktree/ticket-03`, `ticket-04a`, `ticket-04b`, `ticket-04c` (base: release/v0.1.0). Four subagents implemented 03, 04a, 04b, 04c with TDD; main agent committed in each worktree (subagents had not committed), then merged into release/v0.1.0 after code review.
+- **Fixes during merge:** (1) Unified Vitest: single `vitest.config.mjs`, removed duplicate `vitest.config.ts` / `vitest.config.mts`; (2) Channel tests: Phoenix Socket uses `new transport(url)`, so tests use a `MockTransport` constructor instead of a factory; (3) Merged `src/test/setup.ts` (MockWebSocket + jest-dom); (4) Resolved package.json conflicts (scripts, deps); (5) React component tests need DOM: set `environment: "happy-dom"` so all tests (including .tsx) pass. Build and 53 tests pass.
+- **For next time:** Ask subagents to run `git add -A && git commit -m "..."` in their worktree before returning, so merges are straightforward.
+
+No blocking decisions required; all issues resolved with retries.
 
 ---
 
