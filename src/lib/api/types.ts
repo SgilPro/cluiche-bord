@@ -61,3 +61,29 @@ export interface JoinRoomResponse {
   success: boolean;
   room: Room;
 }
+
+/** GET /api/games – game type for room creation */
+export interface GameType {
+  id: string;
+  name: string;
+  description?: string;
+  min_players?: number;
+  max_players?: number;
+}
+
+/** GET /api/game_variants – variant for a game (e.g. Basic10) */
+export interface GameVariant {
+  id: string;
+  name: string;
+  description?: string;
+  config?: Record<string, unknown>;
+  is_official?: boolean;
+}
+
+export interface ListGameTypesResponse {
+  games: GameType[];
+}
+
+export interface ListGameVariantsResponse {
+  variants: GameVariant[];
+}

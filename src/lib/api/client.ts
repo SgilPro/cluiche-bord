@@ -3,6 +3,8 @@ import type {
   GuestAuthResponse,
   JoinRoomBody,
   JoinRoomResponse,
+  ListGameTypesResponse,
+  ListGameVariantsResponse,
   ListRoomsResponse,
   Room,
 } from "./types";
@@ -162,4 +164,27 @@ export async function joinRoom(id: string, body?: JoinRoomBody): Promise<JoinRoo
  */
 export async function leaveRoom(id: string): Promise<void> {
   await request<void>(`/api/rooms/${encodeURIComponent(id)}/leave`, { method: "POST", body: {} });
+}
+
+/**
+ * List game types (catalog for room creation). No auth required.
+ */
+export async function listGameTypes(): Promise<ListGameTypesResponse> {
+  return request<ListGameTypesResponse>("/api/games", { method: "GET" });
+}
+
+export interface ListGameVariantsParams {
+  game_id: string;
+  is_official?: boolean;
+}
+
+/**
+ * List game variants for a game (e.g. Basic10 for werewolf). No auth required.
+ */
+export async function listGameVariants(
+  params: ListGameVariantsParams
+): Promise<ListGameVariantsResponse> {
+  const search = new URLSearchParams({ game_id: params.game_id });
+  if (params.is_official !== undefined) search.set("is_official", String(params.is_official));
+  return request<ListGameVariantsResponse>(`/api/game_variants?${search}`, { method: "GET" });
 }

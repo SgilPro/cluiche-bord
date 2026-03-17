@@ -6,17 +6,23 @@ export {
   getToken,
   joinRoom,
   leaveRoom,
+  listGameTypes,
+  listGameVariants,
   listRooms,
   setApiOriginForTesting,
   setToken,
 } from "./client";
-export type { ListRoomsParams } from "./client";
+export type { ListGameVariantsParams, ListRoomsParams } from "./client";
 export type {
   CreateRoomBody,
   GameStatus,
+  GameType,
+  GameVariant,
   GuestAuthResponse,
   JoinRoomBody,
   JoinRoomResponse,
+  ListGameTypesResponse,
+  ListGameVariantsResponse,
   ListRoomsResponse,
   Room,
   RoomListItem,
