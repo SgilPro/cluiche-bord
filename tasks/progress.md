@@ -17,6 +17,10 @@
 | 04b Phoenix Channel Client | codex/ticket-04b @ .worktree/ticket-04b | Done | subagent | ✓ |
 | 04c Game State Types | codex/ticket-04c @ .worktree/ticket-04c | Done | subagent | ✓ |
 | 04d Screens | — | Blocked (02, 03, 04b, 04c) | — | |
+| todo-01 Home + guard | — | Done | subagent | ✓ |
+| todo-02 Create room | — | Done | subagent | ✓ |
+| todo-03 Waiting room | codex/todo-03 @ .worktree/todo-03 | Pending | — | |
+| todo-04 Game phases | codex/todo-04 @ .worktree/todo-04 | Pending | — | |
 
 ---
 
@@ -26,6 +30,8 @@
 - **04a** → release/v0.1.0 (merge, resolved vitest.config.mjs): auth + REST client.
 - **04b** → release/v0.1.0 (merge, resolved package.json): Phoenix channel client; post-merge fix: channel tests use constructor for transport, single vitest.config.mjs, removed vitest.config.ts.
 - **03** → release/v0.1.0 (merge, resolved setup.ts + package.json): NotificationBanner, FixedBottomBar, SegmentedControl, Card, Modal; vitest unified (happy-dom for all tests, React plugin).
+- **todo-01** → release/v0.1.0 (fast-forward): home page align spec/首頁.png, /rooms guard (即將開放).
+- **todo-02** → release/v0.1.0 (fast-forward): create-room page (form + success state).
 
 ---
 
