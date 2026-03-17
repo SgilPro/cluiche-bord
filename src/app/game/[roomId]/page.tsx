@@ -1,21 +1,44 @@
 "use client";
 
-import Link from "next/link";
+import PhaseRouter from "@/components/pages/PhaseRouter";
+import type { GameState } from "@/lib/games/werewolf/types";
 import { useParams } from "next/navigation";
+import { useMemo } from "react";
+
+/** Mock game state for development. Replace with Channel state when connected. */
+function createMockState(overrides?: Partial<GameState>): GameState {
+  const players = Array.from({ length: 6 }, (_, i) => ({
+    id: `player-${i}`,
+    alive: true,
+    role: null,
+    seat_index: i,
+  }));
+
+  return {
+    phase: "night",
+    sub_phase: "wolves",
+    day_number: 1,
+    players,
+    sheriff_id: null,
+    pending_death: null,
+    ...overrides,
+  };
+}
 
 export default function GameRoomPage() {
   const params = useParams();
   const roomId = params.roomId as string;
 
+  const mockState = useMemo(
+    () =>
+      createMockState({
+        phase: "night",
+        sub_phase: "wolves",
+      }),
+    [],
+  );
+
   return (
-    <main className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-4">房間 {roomId}</h1>
-      <p className="text-gray-600 mb-4">
-        遊戲畫面將由 Phoenix Channel 與 Elixir 後端提供（見 tasks/ticket-04b-channel-client.md、ticket-04d-screens.md）。
-      </p>
-      <Link href="/" className="text-blue-600 hover:underline">
-        ← 返回首頁
-      </Link>
-    </main>
+    <PhaseRouter state={mockState} roomId={roomId} />
   );
 }
