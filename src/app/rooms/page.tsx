@@ -1,17 +1,22 @@
-"use client";
-
 import Link from "next/link";
 
 export default function RoomsPage() {
   return (
-    <main className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-4">遊戲房間</h1>
-      <p className="text-gray-600 mb-4">
-        房間列表與建立/加入將由 Elixir 後端 API 提供（見 tasks/ticket-04a-auth-rest-client.md）。
-      </p>
-      <Link href="/" className="text-blue-600 hover:underline">
-        ← 返回首頁
-      </Link>
+    <main className="flex min-h-screen flex-col items-center justify-center bg-[var(--background-primary)] px-6">
+      <div className="text-center">
+        <h1 className="mb-4 text-xl font-bold text-[var(--text-on-dark)]">
+          即將開放
+        </h1>
+        <p className="mb-6 text-[var(--text-secondary)]">
+          房間列表與加入功能即將推出，敬請期待。
+        </p>
+        <Link
+          href="/"
+          className="inline-flex items-center justify-center rounded-lg bg-[var(--accent-secondary)] px-4 py-2.5 text-base font-medium text-[var(--text-on-dark)] transition-opacity hover:opacity-90"
+        >
+          返回首頁
+        </Link>
+      </div>
     </main>
   );
 }
