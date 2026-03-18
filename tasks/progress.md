@@ -1,26 +1,37 @@
 # Tickets Progress (release/v0.1.0)
 
-**Base branch:** `release/v0.1.0` (commit 4e376ee)  
-**Worktrees:** `.worktree/<ticket-id>` → branch `codex/<ticket-id>`  
+**Base branch:** `release/v0.1.0` (commit 4e376ee)
+**Worktrees:** `.worktree/<ticket-id>` → branch `codex/<ticket-id>`
 **Flow:** Subagent implements in worktree with TDD → Code review → Merge to release/v0.1.0 → Update this file.
 
 ---
 
 ## Status
 
-| Ticket | Branch / Worktree | Status | Assignee | Merged |
-|--------|-------------------|--------|----------|--------|
-| 00 Cleanup | — | Done | main | ✓ (already on release) |
-| 02 Design Tokens & Style Guide | — | Done | main | ✓ (already on release) |
-| 03 Reusable Components | codex/ticket-03 @ .worktree/ticket-03 | Done | subagent | ✓ |
-| 04a Auth & REST Client | codex/ticket-04a @ .worktree/ticket-04a | Done | subagent | ✓ |
-| 04b Phoenix Channel Client | codex/ticket-04b @ .worktree/ticket-04b | Done | subagent | ✓ |
-| 04c Game State Types | codex/ticket-04c @ .worktree/ticket-04c | Done | subagent | ✓ |
-| 04d Screens | — | Blocked (02, 03, 04b, 04c) | — | |
-| todo-01 Home + guard | — | Done | subagent | ✓ |
-| todo-02 Create room | — | Done | subagent | ✓ |
-| todo-03 Waiting room | — | Done | subagent | ✓ |
-| todo-04 Game phases | — | Done | subagent | ✓ |
+| Ticket | Branch / Worktree | 狀態 | 負責人 | 已合併 |
+|--------|-------------------|------|--------|--------|
+| A .ai/ 資料夾重組 | — | Done | main | ✓ |
+| B Card ticket variant | — | Done | subagent | ✓ |
+| C 文件繁體中文化 | — | Done | subagent | ✓ |
+| D tasks/ 清理 + skill | — | Done | subagent | ✓ |
+| 04d Screens 後端整合 | — | Pending | — | |
+
+---
+
+## Archived (已完成並合併的 tickets)
+
+| Ticket | 說明 | 已合併 |
+|--------|------|--------|
+| 00 Cleanup | 專案初始清理 | ✓ |
+| 02 Design Tokens & Style Guide | 設計系統基礎 | ✓ |
+| 03 Reusable Components | NotificationBanner, FixedBottomBar, SegmentedControl, Card, Modal | ✓ |
+| 04a Auth & REST Client | 認證 + REST 客戶端 | ✓ |
+| 04b Phoenix Channel Client | Phoenix Channel 客戶端 | ✓ |
+| 04c Game State Types | 遊戲狀態型別 | ✓ |
+| todo-01 Home + guard | 首頁 + 路由守衛 | ✓ |
+| todo-02 Create room | 建立房間頁面 | ✓ |
+| todo-03 Waiting room | 等待室頁面 | ✓ |
+| todo-04 Game phases | 遊戲階段元件 | ✓ |
 
 ---
 
@@ -34,6 +45,10 @@
 - **todo-02** → release/v0.1.0 (fast-forward): create-room page (form + success state).
 - **todo-03** → release/v0.1.0 (merge): rooms/[roomId] waiting room, getUserId in API client.
 - **todo-04** → release/v0.1.0 (fast-forward): game phase components in components/pages, PhaseRouter in game page.
+- **Ticket A** → release/v0.1.0: .ai/ 資料夾重組（context、skills 整理）。
+- **Ticket B** → release/v0.1.0: Card 元件新增 ticket variant。
+- **Ticket C** → release/v0.1.0: 文件繁體中文化（CLAUDE.md、docs/）。
+- **Ticket D** → release/v0.1.0: 清理已完成 tasks/、新增 skill-spec-driven-development。
 
 ---
 
