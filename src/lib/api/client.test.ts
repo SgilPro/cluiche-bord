@@ -26,7 +26,7 @@ describe("getApiOrigin", () => {
 
   it("returns fallback when NEXT_PUBLIC_API_ORIGIN is empty", () => {
     process.env.NEXT_PUBLIC_API_ORIGIN = "";
-    expect(getApiOrigin()).toBe("http://localhost:4000");
+    expect(getApiOrigin()).toBe("https://cluiche-bord.zeabur.app");
   });
 
   it("uses overridden value when set for testing", () => {
