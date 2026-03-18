@@ -28,11 +28,11 @@ export default function Header({
       : "bg-[var(--background-primary)]";
   const titleColor =
     variant === "werewolf"
-      ? "text-[var(--text-on-dark)]"
+      ? "text-[var(--action-danger)]"
       : "text-[var(--accent-primary)]";
 
   return (
-    <header className={bg}>
+    <header className={`sticky top-0 z-10 ${bg}`}>
       <div className="flex items-center justify-between px-4 py-3">
         <h1 className={`text-xl font-bold ${titleColor}`}>{title}</h1>
         {actionIcon != null && (

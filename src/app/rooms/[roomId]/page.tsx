@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { LogOut, Play, Share } from "lucide-react";
 import {
   getRoom,
   getUserId,
@@ -11,66 +12,10 @@ import {
 import type { Room } from "@/lib/api";
 import {
   Button,
-  FixedBottomBar,
   Header,
   NotificationBanner,
   PlayerListItem,
-  SegmentedControl,
 } from "@/components/ui";
-
-function ShareIcon() {
-  return (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-      <polyline points="16 6 12 2 8 6" />
-      <line x1="12" y1="2" x2="12" y2="15" />
-    </svg>
-  );
-}
-
-function LeaveIcon() {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 20 20"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-      <polyline points="16 17 21 12 16 7" />
-      <line x1="21" y1="12" x2="9" y2="12" />
-    </svg>
-  );
-}
-
-function PlayIcon() {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 20 20"
-      fill="currentColor"
-      aria-hidden
-    >
-      <polygon points="5 3 5 17 17 10 5 3" />
-    </svg>
-  );
-}
 
 export default function WaitingRoomPage() {
   const params = useParams();
@@ -81,7 +26,6 @@ export default function WaitingRoomPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [bannerDismissed, setBannerDismissed] = useState(false);
-  const [segmentActive, setSegmentActive] = useState<string>("reorder");
   const [leaving, setLeaving] = useState(false);
   const [starting, setStarting] = useState(false);
 
@@ -169,11 +113,6 @@ export default function WaitingRoomPage() {
   const currentCount = room.players?.length ?? 0;
   const maxCount = room.max_players ?? 10;
 
-  const segments = [
-    { id: "reorder", label: "重新排序" },
-    { id: "change-host", label: "變更房主" },
-  ];
-
   const slots: Array<{
     seatNumber: number;
     player: { user_id: string; nickname: string } | null;
@@ -187,15 +126,15 @@ export default function WaitingRoomPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--background-primary)]">
+    <div className="flex min-h-screen flex-col bg-[var(--background-surface)]">
       <Header
         title="Werewolf"
         variant="werewolf"
-        actionIcon={<ShareIcon />}
+        actionIcon={<Share size={24} aria-hidden />}
         onActionClick={handleShare}
       />
 
-      <main className="flex-1 pb-24">
+      <main className="flex-1 pb-[42px] pt-2">
         <div className="flex flex-col gap-4 px-4 py-4">
           {!bannerDismissed && (
             <NotificationBanner
@@ -207,12 +146,21 @@ export default function WaitingRoomPage() {
           )}
 
           {isHost && (
-            <div className="flex max-w-[320px]">
-              <SegmentedControl
-                segments={segments}
-                activeId={segmentActive}
-                onSelect={setSegmentActive}
-              />
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="purple"
+                className="h-[42px] w-[104px] rounded-none"
+                onClick={() => {/* reorder */}}
+              >
+                重新排序
+              </Button>
+              <Button
+                variant="yellow"
+                className="h-[42px] w-[104px] rounded-none"
+                onClick={() => {/* change host */}}
+              >
+                變更房主
+              </Button>
             </div>
           )}
 
@@ -231,30 +179,30 @@ export default function WaitingRoomPage() {
         </div>
       </main>
 
-      <FixedBottomBar className="bg-[var(--background-surface)]">
-        <Button
-          variant="danger"
-          fullWidth
-          leftIcon={<LeaveIcon />}
-          onClick={handleLeave}
-          disabled={leaving}
-        >
-          離開房間
-        </Button>
-        {isHost ? (
+      <footer className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-[var(--background-surface)]">
+        <div className="flex h-[42px] items-stretch justify-between">
           <Button
-            variant="success"
-            fullWidth
-            leftIcon={<PlayIcon />}
-            onClick={handleStartGame}
-            disabled={starting}
+            variant="danger"
+            className="h-full w-[104px] rounded-none text-black"
+            leftIcon={<LogOut size={20} aria-hidden />}
+            onClick={handleLeave}
+            disabled={leaving}
           >
-            開始遊戲
+            離開房間
           </Button>
-        ) : (
-          <div />
-        )}
-      </FixedBottomBar>
+          {isHost && (
+            <Button
+              variant="green"
+              className={`h-full w-[104px] rounded-none text-black${currentCount < maxCount ? " opacity-60" : ""}`}
+              leftIcon={<Play size={20} aria-hidden />}
+              onClick={handleStartGame}
+              disabled={starting}
+            >
+              開始遊戲
+            </Button>
+          )}
+        </div>
+      </footer>
     </div>
   );
 }

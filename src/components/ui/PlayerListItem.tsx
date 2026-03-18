@@ -1,13 +1,10 @@
 "use client";
 
-import Image from "next/image";
-
 export interface PlayerListItemProps {
   seatNumber: number;
   name: string | null;
   isHost?: boolean;
   isEmpty?: boolean;
-  avatarUrl?: string | null;
 }
 
 export default function PlayerListItem({
@@ -15,7 +12,6 @@ export default function PlayerListItem({
   name,
   isHost = false,
   isEmpty = false,
-  avatarUrl,
 }: PlayerListItemProps) {
   const bg = isHost ? "bg-[var(--accent-green)]" : "bg-[var(--background-surface)]";
   const numberColor = isEmpty ? "text-[var(--text-secondary)]" : "text-[var(--text-primary)]";
@@ -41,11 +37,7 @@ export default function PlayerListItem({
         )}
       </div>
       <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-[var(--placeholder-avatar)]">
-        {avatarUrl ? (
-          <Image src={avatarUrl} width={40} height={40} alt="" className="h-full w-full object-cover" />
-        ) : (
-          <span className="sr-only">頭像</span>
-        )}
+        <span className="sr-only">頭像</span>
       </div>
     </div>
   );
