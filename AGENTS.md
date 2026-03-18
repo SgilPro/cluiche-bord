@@ -1,3 +1,5 @@
+<!-- AI 指令 source of truth: .ai/ 資料夾 -->
+<!-- .openskills 是 .ai/skills 的 symlink，CLAUDE.md 引用 .ai/ -->
 <!-- PRPM_MANIFEST_START -->
 
 <skills_system priority="1">

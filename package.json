@@ -45,7 +45,7 @@
     "vitest": "^4.1.0"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
+    "src/**/*.{js,jsx,ts,tsx}": [
       "eslint --max-warnings=0"
     ]
   }
