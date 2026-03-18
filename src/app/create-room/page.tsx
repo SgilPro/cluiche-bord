@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, FixedBottomBar, FormField, Header } from "@/components/ui";
+import { Button, FormField, Header } from "@/components/ui";
 import {
   createGuest,
   createRoom,
@@ -104,95 +104,100 @@ export default function CreateRoomPage() {
 
   if (view === "success" && room) {
     return (
-      <div className="flex min-h-screen flex-col bg-[var(--background-muted)]">
+      <div className="flex h-screen flex-col bg-transparent">
         <Header
           title="Cluiche Bord"
           pageTitle="建立成功"
           pageTitleAlign="center"
           variant="success"
         />
-        <main className="flex-1">
-          <div className="mx-auto w-full max-w-[360px] px-4 py-6 pb-24">
-            {/* Top ticket */}
-            <div className="rounded-t-[24px] bg-[var(--background-primary)] px-5 py-5 space-y-3">
-              <div className="flex justify-between">
-                <span className="text-[var(--text-on-dark)]">房間名稱</span>
-                <span className="text-[var(--text-on-dark)] font-medium">{room.name ?? "-"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[var(--text-on-dark)]">玩家暱稱</span>
-                <span className="text-[var(--text-on-dark)] font-medium">
-                  {(nickname || room.players?.[0]?.nickname) ?? "-"}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[var(--text-on-dark)]">選擇遊戲</span>
-                <span className="text-[var(--text-on-dark)] font-medium">
-                  {selectedGame?.name ?? room.game_id ?? "-"}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[var(--text-on-dark)]">規則變體</span>
-                <span className="text-[var(--text-on-dark)] font-medium">
-                  {selectedVariant?.name ?? room.variant_id ?? "-"}
-                </span>
-              </div>
+
+        {/* Content: fills all remaining height, sections split 11:7 */}
+        <div className="flex flex-1 flex-col min-h-0">
+          {/* Section 1: 房間資訊 — only bottom corners rounded */}
+          <div className="flex-[11] flex flex-col justify-center rounded-b-[24px] bg-[var(--background-muted)] px-[60px] py-5 space-y-3">
+            <div className="flex justify-between">
+              <span className="text-[var(--text-on-dark)]">房間名稱</span>
+              <span className="text-[var(--text-on-dark)] font-medium">{room.name ?? "-"}</span>
             </div>
-            {/* Bottom ticket */}
-            <div className="border-ticket-top rounded-b-[24px] bg-[var(--background-primary)] px-5 py-5">
-              <div className="flex justify-between">
-                <span className="text-[var(--text-on-dark)]">房間代碼</span>
-                <span className="font-mono text-lg font-medium text-[var(--text-on-dark)]">
-                  {room.id}
-                </span>
-              </div>
-              {gameUrl && (
-                <div className="mt-4 flex flex-col items-center gap-2">
-                  <QRCodeSVG
-                    value={gameUrl}
-                    size={160}
-                    bgColor="#1a1b26"
-                    fgColor="#ffffff"
-                  />
-                  <p className="text-xs text-[var(--text-secondary)] text-center break-all">
-                    {gameUrl}
-                  </p>
-                </div>
-              )}
+            <div className="flex justify-between">
+              <span className="text-[var(--text-on-dark)]">玩家暱稱</span>
+              <span className="text-[var(--text-on-dark)] font-medium">
+                {(nickname || room.players?.[0]?.nickname) ?? "-"}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[var(--text-on-dark)]">選擇遊戲</span>
+              <span className="text-[var(--text-on-dark)] font-medium">
+                {selectedGame?.name ?? room.game_id ?? "-"}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[var(--text-on-dark)]">規則變體</span>
+              <span className="text-[var(--text-on-dark)] font-medium">
+                {selectedVariant?.name ?? room.variant_id ?? "-"}
+              </span>
             </div>
           </div>
-        </main>
-        <FixedBottomBar
-          mode="raw"
-          className="h-[43px] items-stretch bg-[var(--background-muted)] px-0 border-ticket-top justify-end"
-        >
-          <Button
-            type="button"
-            variant="success"
-            className="h-full w-[104px] rounded-none px-2 py-2 text-black"
-            leftIcon={<Circle aria-hidden className="h-4 w-4" />}
-            onClick={() => router.push(`/game/${room.id}`)}
-          >
-            進入房間
-          </Button>
-        </FixedBottomBar>
+
+          {/* Dashed separator between section 1 and section 2 */}
+          <div className="border-ticket-top mx-[24px]" />
+
+          {/* Section 2: 房間代碼 + QR — all corners rounded */}
+          <div className="flex-[7] rounded-[24px] bg-[var(--background-muted)] px-[60px] py-5">
+            <div className="flex justify-between">
+              <span className="text-[var(--text-on-dark)]">房間代碼</span>
+              <span className="font-mono text-lg font-medium text-[var(--text-on-dark)]">
+                {room.id}
+              </span>
+            </div>
+            {gameUrl && (
+              <div className="mt-4 flex flex-col items-center gap-2">
+                <QRCodeSVG
+                  value={gameUrl}
+                  size={160}
+                  bgColor="#1a1b26"
+                  fgColor="#ffffff"
+                />
+                <p className="text-xs text-[var(--text-secondary)] text-center break-all">
+                  {gameUrl}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Footer: static, part of flex flow */}
+        <footer className="bg-[var(--background-muted)]">
+          <div className="border-ticket-top mx-[24px]" />
+          <div className="flex h-[43px] justify-end">
+            <Button
+              type="button"
+              variant="success"
+              className="h-full w-[104px] rounded-none px-2 py-2 text-black"
+              leftIcon={<Circle aria-hidden className="h-4 w-4" />}
+              onClick={() => router.push(`/rooms/${room.id}`)}
+            >
+              進入房間
+            </Button>
+          </div>
+        </footer>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--background-muted)]">
+    <div className="flex h-screen flex-col bg-transparent">
       <Header
         title="Cluiche Bord"
         pageTitle="建立房間"
         pageTitleAlign="center"
       />
-      <main className="flex-1">
-        <div className="flex flex-1 flex-col">
+      <main className="flex-1 min-h-0 overflow-y-auto rounded-b-[24px] bg-[var(--background-muted)]">
           <form
             id="create-room-form"
             onSubmit={handleSubmit}
-            className="mx-auto flex w-full max-w-[360px] flex-col gap-4 px-4 py-6 pb-24"
+            className="mx-auto flex w-full max-w-[360px] flex-col gap-4 px-4 py-6"
           >
             <FormField
               label="房間名稱"
@@ -272,33 +277,32 @@ export default function CreateRoomPage() {
               <p className="text-sm text-[var(--action-danger)]">{error}</p>
             )}
           </form>
-        </div>
       </main>
-      <FixedBottomBar
-        mode="raw"
-        className="h-[43px] items-stretch bg-[var(--background-muted)] px-0 border-ticket-top justify-between"
-      >
-        <Link href="/" className="block h-full">
+      <div className="border-ticket-top mx-[24px]" />
+      <footer className="bg-[var(--background-muted)]">
+        <div className="flex h-[42px] items-stretch justify-between">
+          <Link href="/" className="block h-full">
+            <Button
+              type="button"
+              variant="danger"
+              className="h-full w-[104px] rounded-none px-2 py-2 text-black"
+              leftIcon={<X aria-hidden className="h-4 w-4" />}
+            >
+              取消建立
+            </Button>
+          </Link>
           <Button
-            type="button"
-            variant="danger"
+            type="submit"
+            form="create-room-form"
+            variant="success"
             className="h-full w-[104px] rounded-none px-2 py-2 text-black"
-            leftIcon={<X aria-hidden className="h-4 w-4" />}
+            leftIcon={<Circle aria-hidden className="h-4 w-4" />}
+            disabled={submitting}
           >
-            取消建立
+            {submitting ? "建立中..." : "確認建立"}
           </Button>
-        </Link>
-        <Button
-          type="submit"
-          form="create-room-form"
-          variant="success"
-          className="h-full w-[104px] rounded-none px-2 py-2 text-black"
-          leftIcon={<Circle aria-hidden className="h-4 w-4" />}
-          disabled={submitting}
-        >
-          {submitting ? "建立中..." : "確認建立"}
-        </Button>
-      </FixedBottomBar>
+        </div>
+      </footer>
     </div>
   );
 }

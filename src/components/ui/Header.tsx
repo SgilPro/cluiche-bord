@@ -55,7 +55,7 @@ export default function Header({
           }`}
         >
           <h2
-            className={`text-lg font-medium text-[var(--text-primary)] ${
+            className={`text-lg font-bold text-[var(--text-primary)] ${
               pageTitleAlign === "center" ? "text-center" : ""
             }`}
           >
