@@ -1,136 +1,139 @@
-# Cluiche Bord Rewrite – Progress Report
+# Cluiche Bord 改寫進度報告
 
-**Last updated:** (auto)  
-**Mode:** Unsupervised long-run. Non-blocking issues and open decisions recorded here.
+**最後更新：** （自動）
+**模式：** 無人監督長時間執行。非阻塞性問題與待決定事項記錄於此。
 
 ---
 
-## 0. Cleanup (Current Branch)
+## 0. 清理（目前分支）
 
-**Status:** Done.
+**狀態：** 完成。
 
-**Scope:**
-- Remove Prisma (schema, migrations, generated client, `src/lib/db`, `src/app/api/*`, `src/generated/prisma`).
-- Remove socket-server (Node): `socket-server.ts`, `socket-server.js`, `src/lib/socket.ts`, socket-related UI.
-- Remove legacy full-stack code under `src/` that depends on Prisma or socket-server; keep only what Next 16 + App Router needs for a **frontend-only** app (Elixir backend will serve REST + Channel).
-- Next: 15.3.2 (upgrade to 16 when available). No API routes in this repo for rooms/games (those live in Elixir).
+**範圍：**
+- 移除 Prisma（schema、migrations、generated client、`src/lib/db`、`src/app/api/*`、`src/generated/prisma`）。
+- 移除 socket-server（Node）：`socket-server.ts`、`socket-server.js`、`src/lib/socket.ts`、socket 相關 UI。
+- 移除 `src/` 下依賴 Prisma 或 socket-server 的舊版全端程式碼；僅保留純前端 App Router 所需內容（後端由 Elixir 提供 REST + Channel）。
+- Next.js：15.3.2（有 16 時再升級）。此專案無 rooms/games 的 API routes（那些在 Elixir）。
 
-**Done:**
-- [x] Deleted `prisma/`, `src/generated/`, `src/lib/db/`, `src/app/api/`.
-- [x] Deleted `socket-server.ts`, `socket-server.js`; removed `socket-server` script; deleted `scripts/test-db-connection.ts`.
-- [x] Stripped `package.json` of `@prisma/client`, `prisma`, `socket.io`, `socket.io-client`, `qrcode.react`, `simple-peer`, `@types/simple-peer`.
-- [x] Replaced `src/app/page.tsx`, `src/app/rooms/page.tsx`, `src/app/game/[roomId]/page.tsx` with stubs; removed `GameChat`, `Chat`, `src/lib/socket.ts`, `src/lib/games/werewolf/engine.ts`.
-- [x] Kept: `next.config.ts`, `tsconfig.json`, `postcss.config.mjs`, `tailwind`, `layout.tsx`, `globals.css`, `src/lib/games/werewolf/types.ts` (for Ticket 04c alignment later).
+**已完成：**
+- [x] 刪除 `prisma/`、`src/generated/`、`src/lib/db/`、`src/app/api/`。
+- [x] 刪除 `socket-server.ts`、`socket-server.js`；移除 `socket-server` script；刪除 `scripts/test-db-connection.ts`。
+- [x] 從 `package.json` 移除 `@prisma/client`、`prisma`、`socket.io`、`socket.io-client`、`qrcode.react`、`simple-peer`、`@types/simple-peer`。
+- [x] 以 stub 替換 `src/app/page.tsx`、`src/app/rooms/page.tsx`、`src/app/game/[roomId]/page.tsx`；移除 `GameChat`、`Chat`、`src/lib/socket.ts`、`src/lib/games/werewolf/engine.ts`。
+- [x] 保留：`next.config.ts`、`tsconfig.json`、`postcss.config.mjs`、`tailwind`、`layout.tsx`、`globals.css`、`src/lib/games/werewolf/types.ts`（供 Ticket 04c 對齊使用）。
 
-**Build:** `npm run build` passes.
+**建置：** `npm run build` 通過。
 
-**Non-blocking:** Next.js warns about `viewport` in metadata — consider moving to `viewport` export (see Next docs). Noted in §5 below.
+**非阻塞：** Next.js 對 metadata 中的 `viewport` 有警告——建議改為獨立的 `viewport` export（見 Next.js 文件）。已記錄於 §5。
 
 ---
 
 ## 1. .openskills / Superpower (prpm)
 
-**Status:** Reviewed.
+**狀態：** 已審閱。
 
-**Location:** `.openskills/` (skills installed via prpm under `.openskills`).
+**位置：** `.openskills/`（透過 prpm 安裝的 skills）。
 
-**Relevant skills for this rewrite:**
-- **skill-using-superpowers** – Mandatory: list skills → if any match, read with Skill tool → announce usage → follow skill. Use for any multi-step or checklist task.
-- **skill-dispatching-parallel-agents** – Use when 3+ independent workstreams (e.g. design tokens, components, API client) can be done in parallel by subagents.
-- **skill-writing-plans** – For breaking down design/API/flow into ordered steps.
-- **skill-subagent-driven-development** – When delegating to subagents (e.g. explore, shell, generalPurpose).
-- **skill-executing-plans** – Execute tickets in order where dependencies exist.
-- **skill-verification-before-completion** – Before marking a ticket done, verify it meets the spec (e.g. Design Tokens doc, Style Guide, contract alignment).
+**此次改寫的相關 skills：**
+- **skill-using-superpowers** – 必要：列出 skills → 若有符合者，用 Skill tool 讀取 → 宣告使用 → 遵循 skill。用於任何多步驟或清單任務。
+- **skill-dispatching-parallel-agents** – 當有 3 個以上獨立工作流（如 design tokens、components、API client）可由 subagent 並行處理時使用。
+- **skill-writing-plans** – 用於將設計/API/流程拆解為有序步驟。
+- **skill-subagent-driven-development** – 委派給 subagent 時使用（如 explore、shell、generalPurpose）。
+- **skill-executing-plans** – 有依賴關係時按順序執行 tickets。
+- **skill-verification-before-completion** – 標記 ticket 完成前，驗證是否符合規格（如 Design Tokens 文件、Style Guide、contract 對齊）。
 
-**How subagents will use them:**
-- **Main agent:** Before each phase, list skills → if “dispatching-parallel-agents” or “subagent-driven-development” applies, invoke mcp_task with clear scope and “return summary to report”.
-- **Subagents:** Given a ticket (e.g. “Extract Design Tokens from spec/”), they run in readonly or write mode as needed; they do not have Skill tool, so the main agent will pass condensed instructions (e.g. “follow design-tokens ticket; output tokens in tasks/design-tokens.md”).
-- **Checklists:** When a skill has a checklist, main agent creates TodoWrite todos for each item and marks them complete as subagents or main agent finish.
+**Subagent 使用方式：**
+- **主 agent：** 每個階段前列出 skills → 若「dispatching-parallel-agents」或「subagent-driven-development」適用，以明確範圍呼叫 mcp_task，並要求「回傳摘要至 report」。
+- **Subagents：** 給定一個 ticket（如「從 spec/ 提取 Design Tokens」），以 readonly 或 write 模式執行；subagent 沒有 Skill tool，主 agent 會傳入精簡指令（如「依照 design-tokens ticket；輸出 tokens 至 tasks/design-tokens.md」）。
+- **清單：** 當 skill 有清單時，主 agent 建立 TodoWrite todos，並在 subagent 或主 agent 完成後標記完成。
 
-**Open point:** prpm/superpower “Skill tool” – if the environment exposes a Skill tool to read `.openskills` files, the main agent will use it for “using-superpowers” and “dispatching-parallel-agents”. If not, the above is applied from the already-read SKILL.md content.
-
----
-
-## 2. Design Tokens & Style Guide (from spec/)
-
-**Status:** Done (draft).
-
-**Deliverables:**
-- **Design Tokens:** `docs/design-tokens.md` – colors (backgrounds, accents, actions, text), typography, spacing, border-radius; CSS variables added to `src/app/globals.css`.
-- **Style Guide:** `docs/style-guide.md` – app structure, buttons, form fields, header, notification banner, player list, bottom action bar, icons, do’s/don’ts, and **missing/incomplete** (§10): hover/focus/disabled, errors, loading, responsive, a11y, copy, full icon set.
-
-**Gaps (recorded in style-guide §10 and design-tokens):** No design tool export; breakpoints proposed but not in spec; no dark/light mode or a11y in PNGs; copy inferred from screenshots.
+**待確認：** prpm/superpower「Skill tool」——若環境有 Skill tool 可讀取 `.openskills` 檔案，主 agent 會用於「using-superpowers」和「dispatching-parallel-agents」；若無，則從已讀取的 SKILL.md 內容套用上述方式。
 
 ---
 
-## 3. Reusable Components (from spec/)
+## 2. Design Tokens & Style Guide（來自 spec/）
 
-**Status:** Started.
+**狀態：** 完成（草稿）。
 
-**Done:** `src/components/ui/` – `Button` (variants: primary, secondary, success, danger, segment), `FormField` (label, optional info icon), `Header` (title, optional pageTitle bar, variant default/werewolf, actionIcon), `PlayerListItem` (seatNumber, name, isHost, isEmpty, avatarUrl). Exported from `src/components/ui/index.ts`. Design tokens wired in `globals.css`.
+**交付物：**
+- **Design Tokens：** `docs/design-tokens.md` — 顏色（背景、強調色、操作色、文字色）、字型、間距、border-radius；CSS 變數已加入 `src/app/globals.css`。
+- **Style Guide：** `docs/style-guide.md` — 應用程式結構、按鈕、表單欄位、Header、通知橫幅、玩家列表、底部操作列、圖示、應做／不應做，以及**缺漏／未完成**（§10）：hover/focus/disabled、錯誤狀態、載入狀態、響應式、無障礙、文案、完整圖示集。
 
-**Remaining (can be parallelized later):** NotificationBanner, ActionBar/FixedBottomBar, SegmentedControl, modal/overlay. Optional: next/image for PlayerListItem avatar (ESLint suggests it; currently using `<img>`).
+**缺口（記錄於 style-guide §10 和 design-tokens）：** 無設計工具匯出；斷點為提案但不在規格中；PNG 截圖無深色/淺色模式或無障礙資訊；文案從截圖推斷。
 
 ---
 
-## 4. API & Flow (Elixir backend alignment)
+## 3. 可重用元件（來自 spec/）
 
-**Status:** Read-only review done. Tickets to be created for frontend work.
+**狀態：** 已開始。
 
-**Sources (read-only):**
+**已完成：** `src/components/ui/` — `Button`（variants：primary、secondary、success、danger、segment）、`FormField`（label、選用 info icon）、`Header`（title、選用 pageTitle bar、variant default/werewolf、actionIcon）、`PlayerListItem`（seatNumber、name、isHost、isEmpty、avatarUrl）。從 `src/components/ui/index.ts` 匯出。Design tokens 已連接至 `globals.css`。
+
+**待完成（稍後可並行）：** NotificationBanner、ActionBar/FixedBottomBar、SegmentedControl、modal/overlay。選用：將 PlayerListItem avatar 改用 `next/image`（ESLint 建議；目前使用 `<img>`）。
+
+---
+
+## 4. API 與流程（Elixir 後端對齊）
+
+**狀態：** 唯讀審閱完成。前端工作 tickets 待建立。
+
+**來源（唯讀）：**
 - `/Users/d9niel/_projects/cluiche-bord-elixir/specs/001-werewolf-engine/contracts/`
-  - `README.md` – terminology (game type, variant, session), mock room `werewolf:room:mock`.
-  - `rest-api.openapi.yaml` – REST: `/auth/guest`, `/rooms`, `/rooms/{id}/join`, etc.
-  - `werewolf-channel.asyncapi.yaml` – Channel API (state, phase_change, start_game, night_action, day_vote, sheriff_action, hunter_shoot, advance).
-  - `channel-events.md` – Human-readable Channel events (start_game, night_action, day_vote, sheriff_action, hunter_shoot, advance; server: state, phase_change, sheriff_elected, death_announcement, victory, role_action_result).
-- `/Users/d9niel/_projects/cluiche-bord-elixir/docs/werewolf-flow.mmd` – Mermaid flowchart: night (wolves → witch → seer → hunter_check), sheriff (run → speech → final_withdraw → vote, tie handling), day (announce_deaths, last_word, speech, vote, hunter_shoot).
+  - `README.md` — 術語（game type、variant、session）、mock room `werewolf:room:mock`。
+  - `rest-api.openapi.yaml` — REST：`/auth/guest`、`/rooms`、`/rooms/{id}/join` 等。
+  - `werewolf-channel.asyncapi.yaml` — Channel API（state、phase_change、start_game、night_action、day_vote、sheriff_action、hunter_shoot、advance）。
+  - `channel-events.md` — 人類可讀的 Channel 事件（start_game、night_action、day_vote、sheriff_action、hunter_shoot、advance；伺服器端：state、phase_change、sheriff_elected、death_announcement、victory、role_action_result）。
+- `/Users/d9niel/_projects/cluiche-bord-elixir/docs/werewolf-flow.mmd` — Mermaid 流程圖：夜晚（wolves → witch → seer → hunter_check）、警長（run → speech → final_withdraw → vote，平票處理）、白天（announce_deaths、last_word、speech、vote、hunter_shoot）。
 
-**Planned frontend tickets (parallelizable where deps allow):**
-- **Auth & REST client:** Guest auth (POST /auth/guest), token storage, REST client for rooms (create, list, get, join, leave). Depends on: none. Can start once cleanup is done.
-- **Channel client:** Phoenix Socket JS + channel `werewolf:room:{id}` and `werewolf:room:mock`, join/push/listen; types for state, phase_change, etc. from channel-events.md / AsyncAPI. Depends on: none.
-- **Game state shape:** TypeScript types for `state` payload (phase, sub_phase, players, sheriff_id, pending_death, wolf_votes, wolf_locks, timer_ends_at, etc.) aligned with channel-events and flow. Depends on: Channel client ticket (or do in same ticket).
-- **Screens per phase:** One ticket per major phase or group: e.g. “Lobby (room list, create, join, waiting room)”, “Night (wolves, witch, seer, hunter_check)”, “Sheriff (run, speech, final_withdraw, vote)”, “Day (announce_deaths, speech, vote, hunter_shoot)”. Each screen consumes state and dispatches the right Channel pushes. Depends on: Design tokens + components (ticket 02/03), Channel client + state shape.
+**計劃中的前端 tickets（有依賴時可並行）：**
+- **Auth & REST client：** Guest 認證（POST /auth/guest）、token 儲存、房間 REST client（create、list、get、join、leave）。依賴：無。清理完成後即可開始。
+- **Channel client：** Phoenix Socket JS + channel `werewolf:room:{id}` 與 `werewolf:room:mock`，join/push/listen；來自 channel-events.md / AsyncAPI 的 state、phase_change 等型別。依賴：無。
+- **遊戲狀態形狀：** `state` payload 的 TypeScript 型別（phase、sub_phase、players、sheriff_id、pending_death、wolf_votes、wolf_locks、timer_ends_at 等），與 channel-events 和流程對齊。依賴：Channel client ticket（或同 ticket 完成）。
+- **各階段畫面：** 每個主要階段或群組一個 ticket：如「大廳（房間列表、建立、加入、等待室）」、「夜晚（wolves、witch、seer、hunter_check）」、「警長（run、speech、final_withdraw、vote）」、「白天（announce_deaths、speech、vote、hunter_shoot）」。每個畫面消費 state 並發送正確的 Channel pushes。依賴：Design tokens + 元件（ticket 02/03）、Channel client + state 形狀。
 
-**Tickets:** `tasks/ticket-04a-auth-rest-client.md`, `tasks/ticket-04b-channel-client.md`, `tasks/ticket-04c-game-state-types.md`, `tasks/ticket-04d-screens-*.md` (or one ticket-04-screens with sub-sections). Exact filenames TBD when creating the task files.
+**Tickets：** `tasks/ticket-04a-auth-rest-client.md`、`tasks/ticket-04b-channel-client.md`、`tasks/ticket-04c-game-state-types.md`、`tasks/ticket-04d-screens-*.md`（或帶子章節的單一 ticket-04-screens）。確切檔名建立任務檔時再定。
 
 ---
 
-## 5. Non-blocking Issues & Open Decisions
+## 5. 非阻塞性問題與待決定事項
 
-(Items that could not be resolved after 2–3 reflections and need your input later.)
+（經過 2–3 次反思後無法解決、需要稍後確認的事項。）
 
-- **Next 16:** package.json currently has Next 15.3.2. You asked for “Next 16 + App Router”. If Next 16 is not yet released or we should stay on 15 for now, keep 15 and note “Upgrade to 16 when available” in report. *(Decision: stay on 15 until you confirm 16 version; cleanup will still remove Prisma/socket and prepare for 16.)*
-- **i18n:** All spec screens are Chinese. No i18n strategy in spec. Recorded as gap; no change in this pass unless you request it.
-- **E2E / Playwright:** Not in scope for this ticket set; can be a follow-up ticket after screens exist.
-- **Next viewport:** Build warns "Unsupported metadata viewport is configured in metadata export". Move viewport to a dedicated `viewport` export per Next.js docs (non-blocking).
-- **ESLint:** `PlayerListItem` uses `<img>` for avatar; Next suggests `next/image`. Non-blocking; can switch when optimizing.
+- **Next 16：** `package.json` 目前為 Next 15.3.2。若 Next 16 尚未發布或暫時維持 15，保留 15 並在 report 記錄「有 16 時再升級」。*（決定：維持 15，待你確認 16 版本；清理工作仍會移除 Prisma/socket 並為 16 做準備。）*
+- **i18n：** 所有規格畫面均為中文。規格中無 i18n 策略。記錄為缺口；除非你要求，否則本次不更動。
+- **E2E / Playwright：** 不在此 ticket 範圍內；可在畫面存在後作為後續 ticket。
+- **Next viewport：** 建置警告「Unsupported metadata viewport is configured in metadata export」。依 Next.js 文件，改為獨立的 `viewport` export（非阻塞）。
+- **ESLint：** `PlayerListItem` 的 avatar 使用 `<img>`；Next 建議改用 `next/image`。非阻塞；最佳化時再切換。
 - **create-room 流程：** 建立成功頁的「進入房間」目前導向 `/game/[roomId]`。正確流程應為：建立成功 → 進入等待室 `/rooms/[roomId]` → 房主按開始遊戲後才進入 `/game/[roomId]`。若需修正，改 create-room success 的 Link 目標即可。
+- **Cursor symlink 相容性**：`.cursor/rules`、`.cursor/context`、`.cursor/commands` 已建立 symlink 到 `.ai/`。若 Cursor 版本有 symlink 問題，備選方案是把內容直接留在 `.cursor/` 並加 `# Source: .ai/...` 注釋。請確認後回報。
+- **CLAUDE.md @import**：`CLAUDE.md` 使用 `@path` 語法引用 `.ai/` 下的檔案。若 Claude Code 版本不支援，可改為直接 include 或 copy 內容。
+- **ticket-04d 狀態**：`components/pages/` 已有所有遊戲階段元件，PhaseRouter 也已整合到 `/game/[roomId]`，但後端 Channel 整合尚未完整（目前為 mock 資料）。ticket-04d 留為「待整合後端資料」狀態。
 
 ---
 
-## 6. Ticket Index
+## 6. Ticket 索引
 
-| ID | Title | Deps | Status |
-|----|--------|------|--------|
-| 00 | Cleanup: remove Prisma, API, socket-server, old src | - | Done |
-| 01 | .openskills / Superpower usage report | - | Done (this report) |
-| 02 | Design Tokens & Style Guide from spec/ | - | Done (draft) |
-| 03 | Reusable components from spec/ | 02 | Done (merged) |
-| 04a | Auth & REST client (guest, rooms) | 00 | Done (merged) |
-| 04b | Phoenix Channel client (werewolf:room) | 00 | Done (merged) |
-| 04c | Game state types (Channel state payload) | 04b | Done (merged) |
-| 04d | Screens: Lobby, Night, Sheriff, Day (split or single) | 02, 03, 04b | Pending |
-
----
-
-## 7. Subagent / Worktree Run (this session)
-
-- **Progress:** `tasks/progress.md` created; worktrees at `.worktree/ticket-03`, `ticket-04a`, `ticket-04b`, `ticket-04c` (base: release/v0.1.0). Four subagents implemented 03, 04a, 04b, 04c with TDD; main agent committed in each worktree (subagents had not committed), then merged into release/v0.1.0 after code review.
-- **Fixes during merge:** (1) Unified Vitest: single `vitest.config.mjs`, removed duplicate `vitest.config.ts` / `vitest.config.mts`; (2) Channel tests: Phoenix Socket uses `new transport(url)`, so tests use a `MockTransport` constructor instead of a factory; (3) Merged `src/test/setup.ts` (MockWebSocket + jest-dom); (4) Resolved package.json conflicts (scripts, deps); (5) React component tests need DOM: set `environment: "happy-dom"` so all tests (including .tsx) pass. Build and 53 tests pass.
-- **For next time:** Ask subagents to run `git add -A && git commit -m "..."` in their worktree before returning, so merges are straightforward.
-
-No blocking decisions required; all issues resolved with retries.
+| ID | 標題 | 依賴 | 狀態 |
+|----|------|------|------|
+| 00 | 清理：移除 Prisma、API、socket-server、舊版 src | - | 完成 |
+| 01 | .openskills / Superpower 使用報告 | - | 完成（本報告）|
+| 02 | Design Tokens & Style Guide（來自 spec/）| - | 完成（草稿）|
+| 03 | 可重用元件（來自 spec/）| 02 | 完成（已 merge）|
+| 04a | Auth & REST client（guest、rooms）| 00 | 完成（已 merge）|
+| 04b | Phoenix Channel client（werewolf:room）| 00 | 完成（已 merge）|
+| 04c | 遊戲狀態型別（Channel state payload）| 04b | 完成（已 merge）|
+| 04d | 畫面：大廳、夜晚、警長、白天（分開或合一）| 02, 03, 04b | 待整合後端資料 |
 
 ---
 
-*Report will be updated as subagents complete work and new issues are found.*
+## 7. Subagent / Worktree 執行（本次 session）
+
+- **進度：** `tasks/progress.md` 已建立；worktrees 位於 `.worktree/ticket-03`、`ticket-04a`、`ticket-04b`、`ticket-04c`（base：release/v0.1.0）。四個 subagent 以 TDD 實作 03、04a、04b、04c；主 agent 在各 worktree commit（subagent 未 commit），code review 後 merge 進 release/v0.1.0。
+- **Merge 期間修正：**（1）統一 Vitest：單一 `vitest.config.mjs`，移除重複的 `vitest.config.ts` / `vitest.config.mts`；（2）Channel 測試：Phoenix Socket 使用 `new transport(url)`，故測試改用 `MockTransport` 建構子而非 factory；（3）合併 `src/test/setup.ts`（MockWebSocket + jest-dom）；（4）解決 package.json 衝突（scripts、deps）；（5）React 元件測試需要 DOM：設定 `environment: "happy-dom"` 使所有測試（包含 .tsx）通過。建置與 53 個測試均通過。
+- **下次建議：** 請 subagent 在回傳前於 worktree 執行 `git add -A && git commit -m "..."`，以利後續 merge 順暢。
+
+無阻塞性決策需要；所有問題已透過重試解決。
+
+---
+
+*報告將隨 subagent 完成工作及新問題發現而持續更新。*

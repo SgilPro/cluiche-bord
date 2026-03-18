@@ -7,7 +7,7 @@ Patterns and components inferred from `spec/`. Use with `docs/design-tokens.md`.
 ## 1. App / Page structure
 
 - **Mobile container:** All pages live inside `MobileContainer` — max-width 430px, centered on desktop. Mobile-first; on large screens the app looks like a phone frame.
-- **Lobby (首頁):** Dark background, centered vertical stack of two CTAs (建立房間 yellow, 進入房間 blue). Buttons use `max-w-[280px]`, not full-width. Title "Cluiche bord" top-left, light yellow, header has `border-b border-dotted border-[#323949]`.
+- **Lobby (首頁):** Dark background, centered vertical stack of two CTAs (建立房間 yellow, 進入房間 blue). Buttons use `max-w-[280px]`, not full-width. Title "Cluiche Bord" top-left, light yellow, header has `border-b border-dotted border-[#323949]`.
 - **Form screens (建立房間):** Dark background; yellow horizontal bar with page title; form area with labeled inputs; footer with Cancel (red) + Confirm (green).
 - **Game / Waiting (等待加入頁):** Dark red header with game title and share icon; white content area (banner, segmented control, player list); fixed bottom bar with two full-width buttons (Leave red, Start green).
 
@@ -36,7 +36,7 @@ Shape: rounded rectangle; consistent padding. Prefer a single `Button` component
 
 ## 4. Header
 
-- **Lobby:** App name only (e.g. "Cluiche bord"), light yellow, top-left.
+- **Lobby:** App name only (e.g. "Cluiche Bord"), light yellow, top-left.
 - **Form:** App name + yellow bar with page title (e.g. "建立房間") in dark text.
 - **Game:** Dark red bar, large white title (e.g. "Werewolf"), optional right icon (share).
 
