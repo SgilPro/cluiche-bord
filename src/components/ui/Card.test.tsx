@@ -15,4 +15,22 @@ describe("Card", () => {
     const card = container.firstChild as HTMLElement;
     expect(card).toHaveClass("custom-panel");
   });
+
+  it("default variant renders with shadow-sm class", () => {
+    const { container } = render(<Card variant="default">Default</Card>);
+    const card = container.firstChild as HTMLElement;
+    expect(card).toHaveClass("shadow-sm");
+  });
+
+  it("ticket variant renders with border-dashed class", () => {
+    const { container } = render(<Card variant="ticket">Ticket</Card>);
+    const card = container.firstChild as HTMLElement;
+    expect(card).toHaveClass("border-dashed");
+  });
+
+  it("surface variant renders with border class", () => {
+    const { container } = render(<Card variant="surface">Surface</Card>);
+    const card = container.firstChild as HTMLElement;
+    expect(card).toHaveClass("border");
+  });
 });
