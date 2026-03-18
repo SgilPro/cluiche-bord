@@ -9,7 +9,7 @@ export default function HomePage() {
     <main className="flex min-h-screen flex-col px-6 pt-8">
       <div className="border-b border-dotted border-[#323949] pb-4">
         <h1 className="text-2xl font-bold text-[var(--accent-primary)]">
-          Cluiche bord
+          Cluiche Bord
         </h1>
       </div>
 

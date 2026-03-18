@@ -1,9 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
-import { Circle, CircleHelp, X } from "lucide-react";
+import { Button, FixedBottomBar, FormField, Header } from "@/components/ui";
 import {
   createGuest,
   createRoom,
@@ -14,7 +11,11 @@ import {
   type GameVariant,
   type Room,
 } from "@/lib/api";
-import { Button, FixedBottomBar, FormField, Header } from "@/components/ui";
+import { Circle, CircleHelp, X } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { QRCodeSVG } from "qrcode.react";
+import { useCallback, useEffect, useState } from "react";
 
 export default function CreateRoomPage() {
   const router = useRouter();
@@ -22,6 +23,7 @@ export default function CreateRoomPage() {
   const [room, setRoom] = useState<Room | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [gameUrl, setGameUrl] = useState<string>("");
 
   const [roomName, setRoomName] = useState("");
   const [nickname, setNickname] = useState("");
@@ -77,8 +79,25 @@ export default function CreateRoomPage() {
         setSubmitting(false);
       }
     },
-    [nickname, roomName, gameId, variantId]
+    [nickname, roomName, gameId, variantId],
   );
+
+  useEffect(() => {
+    if (view !== "success" || !room) return;
+    const { hostname, port } = window.location;
+    const portSuffix = port ? `:${port}` : "";
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      fetch("/api/local-ip")
+        .then((r) => r.json())
+        .then((data: { ip: string | null }) => {
+          const ip = data.ip ?? hostname;
+          setGameUrl(`http://${ip}${portSuffix}/game/${room.id}`);
+        })
+        .catch(() => setGameUrl(`http://${hostname}${portSuffix}/game/${room.id}`));
+    } else {
+      setGameUrl(`https://boardgameworld.zeabur.app/game/${room.id}`);
+    }
+  }, [view, room]);
 
   const selectedGame = games.find((g) => g.id === gameId);
   const selectedVariant = variants.find((v) => v.id === variantId);
@@ -86,50 +105,71 @@ export default function CreateRoomPage() {
   if (view === "success" && room) {
     return (
       <div className="flex min-h-screen flex-col bg-[var(--background-muted)]">
-        <Header title="Cluiche bord" pageTitle="建立成功" pageTitleAlign="center" />
+        <Header
+          title="Cluiche Bord"
+          pageTitle="建立成功"
+          pageTitleAlign="center"
+          variant="success"
+        />
         <main className="flex-1">
-          <div className="mx-auto flex w-full max-w-[360px] flex-col gap-4 px-4 py-6 pb-24">
-            <div className="space-y-3 rounded-lg bg-[var(--background-muted)] p-4">
+          <div className="mx-auto w-full max-w-[360px] px-4 py-6 pb-24">
+            {/* Top ticket */}
+            <div className="rounded-t-[24px] bg-[var(--background-primary)] px-5 py-5 space-y-3">
               <div className="flex justify-between">
-                <span className="text-[var(--text-secondary)]">房間名稱</span>
-                <span className="text-[var(--text-on-dark)]">{room.name}</span>
+                <span className="text-[var(--text-on-dark)]">房間名稱</span>
+                <span className="text-[var(--text-on-dark)] font-medium">{room.name ?? "-"}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[var(--text-secondary)]">玩家暱稱</span>
-                <span className="text-[var(--text-on-dark)]">
+                <span className="text-[var(--text-on-dark)]">玩家暱稱</span>
+                <span className="text-[var(--text-on-dark)] font-medium">
                   {(nickname || room.players?.[0]?.nickname) ?? "-"}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[var(--text-secondary)]">選擇遊戲</span>
-                <span className="text-[var(--text-on-dark)]">
+                <span className="text-[var(--text-on-dark)]">選擇遊戲</span>
+                <span className="text-[var(--text-on-dark)] font-medium">
                   {selectedGame?.name ?? room.game_id ?? "-"}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[var(--text-secondary)]">規則變體</span>
-                <span className="text-[var(--text-on-dark)]">
+                <span className="text-[var(--text-on-dark)]">規則變體</span>
+                <span className="text-[var(--text-on-dark)] font-medium">
                   {selectedVariant?.name ?? room.variant_id ?? "-"}
                 </span>
               </div>
             </div>
-            <div className="border-t border-dashed border-[var(--text-secondary)] pt-4">
+            {/* Bottom ticket */}
+            <div className="border-ticket-top rounded-b-[24px] bg-[var(--background-primary)] px-5 py-5">
               <div className="flex justify-between">
-                <span className="text-[var(--text-secondary)]">房間代碼</span>
+                <span className="text-[var(--text-on-dark)]">房間代碼</span>
                 <span className="font-mono text-lg font-medium text-[var(--text-on-dark)]">
                   {room.id}
                 </span>
               </div>
-              <p className="mt-2 text-sm text-[var(--text-secondary)]">
-                請將此代碼或連結分享給其他玩家加入
-              </p>
+              {gameUrl && (
+                <div className="mt-4 flex flex-col items-center gap-2">
+                  <QRCodeSVG
+                    value={gameUrl}
+                    size={160}
+                    bgColor="#1a1b26"
+                    fgColor="#ffffff"
+                  />
+                  <p className="text-xs text-[var(--text-secondary)] text-center break-all">
+                    {gameUrl}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </main>
-        <FixedBottomBar>
+        <FixedBottomBar
+          mode="raw"
+          className="h-[43px] items-stretch bg-[var(--background-muted)] px-0 border-ticket-top justify-end"
+        >
           <Button
+            type="button"
             variant="success"
-            fullWidth
+            className="h-full w-[104px] rounded-none px-2 py-2 text-black"
             leftIcon={<Circle aria-hidden className="h-4 w-4" />}
             onClick={() => router.push(`/game/${room.id}`)}
           >
@@ -142,10 +182,15 @@ export default function CreateRoomPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-[var(--background-muted)]">
-      <Header title="Cluiche bord" pageTitle="建立房間" pageTitleAlign="center" />
+      <Header
+        title="Cluiche Bord"
+        pageTitle="建立房間"
+        pageTitleAlign="center"
+      />
       <main className="flex-1">
         <div className="flex flex-1 flex-col">
           <form
+            id="create-room-form"
             onSubmit={handleSubmit}
             className="mx-auto flex w-full max-w-[360px] flex-col gap-4 px-4 py-6 pb-24"
           >
@@ -245,6 +290,7 @@ export default function CreateRoomPage() {
         </Link>
         <Button
           type="submit"
+          form="create-room-form"
           variant="success"
           className="h-full w-[104px] rounded-none px-2 py-2 text-black"
           leftIcon={<Circle aria-hidden className="h-4 w-4" />}

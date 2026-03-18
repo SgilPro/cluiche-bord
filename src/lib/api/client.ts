@@ -9,7 +9,7 @@ import type {
   Room,
 } from "./types";
 
-const DEFAULT_ORIGIN = "https://cluiche-bord.zeabur.app";
+const DEFAULT_ORIGIN = "http://localhost:4000";
 
 let apiOriginOverride: string | undefined;
 
