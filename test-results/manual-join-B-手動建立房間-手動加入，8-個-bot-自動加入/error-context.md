@@ -1,0 +1,88 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e4]:
+    - banner [ref=e5]:
+      - generic [ref=e6]:
+        - heading "Werewolf" [level=1] [ref=e7]
+        - button "操作" [ref=e8]:
+          - img [ref=e9]
+    - main [ref=e12]:
+      - status [ref=e13]:
+        - generic [ref=e14]:
+          - paragraph [ref=e15]: 正在等待玩家加入房間...
+          - paragraph [ref=e16]: 目前人數 1/10 人, 人數到齊後由房主按下開始遊戲
+        - button "Dismiss" [ref=e17]:
+          - img [ref=e18]
+      - generic [ref=e21]:
+        - button "重新排序" [ref=e22]:
+          - img [ref=e24]
+          - text: 重新排序
+        - button "變更房主" [ref=e27]:
+          - img [ref=e29]
+          - text: 變更房主
+      - list [ref=e31]:
+        - listitem [ref=e32]:
+          - generic [ref=e33]:
+            - generic [ref=e34]: "01"
+            - generic [ref=e36]: 我是人類
+            - generic [ref=e37]: 👑
+            - generic [ref=e39]: 頭像
+        - listitem [ref=e40]:
+          - generic [ref=e41]:
+            - generic [ref=e42]: "02"
+            - generic [ref=e44]: 等待玩家加入...
+            - generic [ref=e46]: 頭像
+        - listitem [ref=e47]:
+          - generic [ref=e48]:
+            - generic [ref=e49]: "03"
+            - generic [ref=e51]: 等待玩家加入...
+            - generic [ref=e53]: 頭像
+        - listitem [ref=e54]:
+          - generic [ref=e55]:
+            - generic [ref=e56]: "04"
+            - generic [ref=e58]: 等待玩家加入...
+            - generic [ref=e60]: 頭像
+        - listitem [ref=e61]:
+          - generic [ref=e62]:
+            - generic [ref=e63]: "05"
+            - generic [ref=e65]: 等待玩家加入...
+            - generic [ref=e67]: 頭像
+        - listitem [ref=e68]:
+          - generic [ref=e69]:
+            - generic [ref=e70]: "06"
+            - generic [ref=e72]: 等待玩家加入...
+            - generic [ref=e74]: 頭像
+        - listitem [ref=e75]:
+          - generic [ref=e76]:
+            - generic [ref=e77]: "07"
+            - generic [ref=e79]: 等待玩家加入...
+            - generic [ref=e81]: 頭像
+        - listitem [ref=e82]:
+          - generic [ref=e83]:
+            - generic [ref=e84]: "08"
+            - generic [ref=e86]: 等待玩家加入...
+            - generic [ref=e88]: 頭像
+        - listitem [ref=e89]:
+          - generic [ref=e90]:
+            - generic [ref=e91]: "09"
+            - generic [ref=e93]: 等待玩家加入...
+            - generic [ref=e95]: 頭像
+        - listitem [ref=e96]:
+          - generic [ref=e97]:
+            - generic [ref=e98]: "10"
+            - generic [ref=e100]: 等待玩家加入...
+            - generic [ref=e102]: 頭像
+    - contentinfo [ref=e103]:
+      - generic [ref=e104]:
+        - button "離開房間" [ref=e105]:
+          - img [ref=e107]
+          - text: 離開房間
+        - button "開始遊戲" [disabled] [ref=e110]:
+          - img [ref=e112]
+          - text: 開始遊戲
+  - alert [ref=e114]
+  - button "Open Next.js Dev Tools" [ref=e120] [cursor=pointer]:
+    - img [ref=e121]
+```

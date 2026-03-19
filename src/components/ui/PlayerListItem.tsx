@@ -20,7 +20,7 @@ export default function PlayerListItem({
 
   return (
     <div
-      className={`flex items-center gap-3 rounded-lg px-4 py-3 ${bg}`}
+      className={`flex h-[70px] items-center gap-3 px-4 ${bg}`}
       data-seat={seatNumber}
       data-empty={isEmpty}
       data-host={isHost}
@@ -28,14 +28,14 @@ export default function PlayerListItem({
       <span className={`w-8 shrink-0 text-sm font-medium ${numberColor}`}>
         {String(seatNumber).padStart(2, "0")}
       </span>
-      <div className="flex min-w-0 flex-1 items-center gap-2">
-        <span className={`truncate ${nameColor}`}>{displayName}</span>
-        {isHost && (
-          <span className="shrink-0 text-[var(--accent-primary)]" aria-hidden>
-            👑
-          </span>
-        )}
+      <div className="flex min-w-0 flex-1 items-center">
+        <span className={`truncate text-[16px] font-bold ${nameColor}`}>{displayName}</span>
       </div>
+      {isHost && (
+        <span className="shrink-0 text-[var(--accent-primary)]" aria-hidden>
+          👑
+        </span>
+      )}
       <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-[var(--placeholder-avatar)]">
         <span className="sr-only">頭像</span>
       </div>

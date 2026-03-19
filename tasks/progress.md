@@ -15,6 +15,7 @@
 | C 文件繁體中文化 | — | Done | subagent | ✓ |
 | D tasks/ 清理 + skill | — | Done | subagent | ✓ |
 | 04d Screens 後端整合 | — | Pending | — | |
+| todo-waiting-room 等待加入頁 UI 修正 | — | Done | subagent | ✓ |
 
 ---
 
@@ -36,6 +37,8 @@
 ---
 
 ## Merge log
+
+- **todo-waiting-room** → release/v0.1.0: 等待加入頁 UI 修正（Header fixed/danger title、lucide icons、Button green/red/yellow/purple variants、重新排序/變更房主改 buttons、footer 票券風格）。
 
 - **04c** → release/v0.1.0 (fast-forward): game state types + vitest.
 - **04a** → release/v0.1.0 (merge, resolved vitest.config.mjs): auth + REST client.

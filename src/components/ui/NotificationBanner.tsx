@@ -1,5 +1,7 @@
 "use client";
 
+import { ChevronsDownUp } from "lucide-react";
+
 export interface NotificationBannerProps {
   message: string;
   secondaryMessage?: string;
@@ -15,7 +17,7 @@ export default function NotificationBanner({
 }: NotificationBannerProps) {
   return (
     <div
-      className="flex items-center justify-between gap-3 rounded-lg bg-[var(--background-surface)] px-4 py-3"
+      className="flex items-center justify-between gap-3 bg-[var(--background-surface)] px-4 py-3 shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
       role="status"
       aria-live="polite"
     >
@@ -34,7 +36,7 @@ export default function NotificationBanner({
           className="shrink-0 text-[var(--text-secondary)] hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)]"
           aria-label="Dismiss"
         >
-          ×
+          <ChevronsDownUp size={18} aria-hidden />
         </button>
       )}
     </div>

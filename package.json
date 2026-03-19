@@ -12,17 +12,21 @@
     "test:watch": "vitest",
     "test:run": "vitest run",
     "test:api": "tsx scripts/test-api.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
     "prepare": "husky install"
   },
   "dependencies": {
     "lucide-react": "^0.577.0",
     "next": "15.3.2",
     "phoenix": "^1.8.0",
-"react": "^19.0.0",
+    "qrcode.react": "^4.2.0",
+    "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",

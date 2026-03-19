@@ -1,21 +1,19 @@
 "use client";
 
-import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
-import { LogOut, Play, Share } from "lucide-react";
-import {
-  getRoom,
-  getUserId,
-  leaveRoom,
-} from "@/lib/api";
-import type { Room } from "@/lib/api";
 import {
   Button,
   Header,
   NotificationBanner,
   PlayerListItem,
 } from "@/components/ui";
+import type { Room } from "@/lib/api";
+import { getApiOrigin, getRoom, getToken, getUserId, leaveRoom } from "@/lib/api";
+import type { WerewolfChannelApi } from "@/lib/channel";
+import { createWerewolfChannel } from "@/lib/channel";
+import { ListOrdered, LogOut, Pen, Play, Share } from "lucide-react";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export default function WaitingRoomPage() {
   const params = useParams();
@@ -28,6 +26,7 @@ export default function WaitingRoomPage() {
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [starting, setStarting] = useState(false);
+  const channelRef = useRef<WerewolfChannelApi | null>(null);
 
   const currentUserId = typeof window !== "undefined" ? getUserId() : null;
   const isHost =
@@ -53,16 +52,52 @@ export default function WaitingRoomPage() {
     fetchRoom();
   }, [fetchRoom]);
 
+  // Connect to Phoenix Channel so all players receive game-start broadcast
+  useEffect(() => {
+    if (!roomId) return;
+    const token = getToken();
+    if (!token) return;
+
+    const wsUrl = getApiOrigin()
+      .replace(/^https/, "wss")
+      .replace(/^http/, "ws")
+      .concat("/socket");
+
+    const ch = createWerewolfChannel({ url: wsUrl, token });
+    channelRef.current = ch;
+
+    ch.connect()
+      .then(() => ch.join(roomId))
+      .then(() => {
+        ch.on("state", () => {
+          router.push(`/game/${roomId}`);
+        });
+        ch.on("phase_change", () => {
+          router.push(`/game/${roomId}`);
+        });
+      })
+      .catch(() => {
+        // Channel unavailable — non-fatal for waiting room
+      });
+
+    return () => {
+      ch.disconnect();
+      channelRef.current = null;
+    };
+  }, [roomId, router]);
+
   const handleShare = useCallback(() => {
     const url = typeof window !== "undefined" ? window.location.href : "";
     if (navigator.share) {
-      navigator.share({
-        title: "狼人殺房間",
-        url,
-        text: `加入房間 ${room?.name ?? roomId}`,
-      }).catch(() => {
-        navigator.clipboard?.writeText(url);
-      });
+      navigator
+        .share({
+          title: "狼人殺房間",
+          url,
+          text: `加入房間 ${room?.name ?? roomId}`,
+        })
+        .catch(() => {
+          navigator.clipboard?.writeText(url);
+        });
     } else {
       navigator.clipboard?.writeText(url);
     }
@@ -120,7 +155,7 @@ export default function WaitingRoomPage() {
   for (let i = 1; i <= maxCount; i++) {
     const player =
       room.players != null && i <= room.players.length
-        ? room.players[i - 1] ?? null
+        ? (room.players[i - 1] ?? null)
         : null;
     slots.push({ seatNumber: i, player });
   }
@@ -134,49 +169,53 @@ export default function WaitingRoomPage() {
         onActionClick={handleShare}
       />
 
-      <main className="flex-1 pb-[42px] pt-2">
-        <div className="flex flex-col gap-4 px-4 py-4">
-          {!bannerDismissed && (
-            <NotificationBanner
-              secondaryMessage="正在等待玩家加入房間..."
-              message={`目前人數 ${currentCount}/${maxCount} 人, 人數到齊後由房主按下開始遊戲`}
-              dismissible
-              onDismiss={() => setBannerDismissed(true)}
-            />
-          )}
+      <main className="flex-1 pb-[42px]">
+        {!bannerDismissed && (
+          <NotificationBanner
+            secondaryMessage="正在等待玩家加入房間..."
+            message={`目前人數 ${currentCount}/${maxCount} 人, 人數到齊後由房主按下開始遊戲`}
+            dismissible
+            onDismiss={() => setBannerDismissed(true)}
+          />
+        )}
 
-          {isHost && (
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="purple"
-                className="h-[42px] w-[104px] rounded-none"
-                onClick={() => {/* reorder */}}
-              >
-                重新排序
-              </Button>
-              <Button
-                variant="yellow"
-                className="h-[42px] w-[104px] rounded-none"
-                onClick={() => {/* change host */}}
-              >
-                變更房主
-              </Button>
-            </div>
-          )}
+        {isHost && (
+          <div className="flex justify-end">
+            <Button
+              variant="purple"
+              className="h-[42px] w-[104px] rounded-none"
+              leftIcon={<ListOrdered size={16} aria-hidden />}
+              onClick={() => {
+                /* reorder */
+              }}
+            >
+              重新排序
+            </Button>
+            <Button
+              variant="yellow"
+              className="h-[42px] w-[104px] rounded-none"
+              leftIcon={<Pen size={16} aria-hidden />}
+              onClick={() => {
+                /* change host */
+              }}
+            >
+              變更房主
+            </Button>
+          </div>
+        )}
 
-          <ul className="flex flex-col gap-2" role="list">
-            {slots.map(({ seatNumber, player }) => (
-              <li key={seatNumber}>
-                <PlayerListItem
-                  seatNumber={seatNumber}
-                  name={player?.nickname ?? null}
-                  isHost={player?.user_id === room.host_user_id}
-                  isEmpty={player == null}
-                />
-              </li>
-            ))}
-          </ul>
-        </div>
+        <ul className="flex flex-col" role="list">
+          {slots.map(({ seatNumber, player }) => (
+            <li key={seatNumber}>
+              <PlayerListItem
+                seatNumber={seatNumber}
+                name={player?.nickname ?? null}
+                isHost={player?.user_id === room.host_user_id}
+                isEmpty={player == null}
+              />
+            </li>
+          ))}
+        </ul>
       </main>
 
       <footer className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-[var(--background-surface)]">
@@ -184,7 +223,7 @@ export default function WaitingRoomPage() {
           <Button
             variant="danger"
             className="h-full w-[104px] rounded-none text-black"
-            leftIcon={<LogOut size={20} aria-hidden />}
+            leftIcon={<LogOut size={16} aria-hidden />}
             onClick={handleLeave}
             disabled={leaving}
           >
@@ -193,10 +232,10 @@ export default function WaitingRoomPage() {
           {isHost && (
             <Button
               variant="green"
-              className={`h-full w-[104px] rounded-none text-black${currentCount < maxCount ? " opacity-60" : ""}`}
-              leftIcon={<Play size={20} aria-hidden />}
+              className="h-full w-[104px] rounded-none text-black"
+              leftIcon={<Play size={16} aria-hidden />}
               onClick={handleStartGame}
-              disabled={starting}
+              disabled={currentCount < maxCount || starting}
             >
               開始遊戲
             </Button>

@@ -1,0 +1,47 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e4]:
+    - banner [ref=e5]:
+      - heading "Cluiche Bord" [level=1] [ref=e7]
+      - heading "建立房間" [level=2] [ref=e9]
+    - main [ref=e10]:
+      - generic [ref=e11]:
+        - generic [ref=e12]:
+          - generic [ref=e14]: 房間名稱
+          - textbox "房間名稱" [ref=e15]:
+            - /placeholder: 請輸入房間名稱
+        - generic [ref=e16]:
+          - generic [ref=e18]: 玩家暱稱
+          - textbox "玩家暱稱" [ref=e19]:
+            - /placeholder: 請輸入暱稱
+        - generic [ref=e20]:
+          - generic [ref=e21]:
+            - generic [ref=e22]: 選擇遊戲
+            - button "更多說明" [ref=e23]:
+              - img [ref=e24]
+          - combobox [ref=e27]:
+            - option "請選擇遊戲" [selected]
+            - option "狼人殺"
+        - generic [ref=e28]:
+          - generic [ref=e29]:
+            - generic [ref=e30]: 規則變體
+            - button "更多說明" [ref=e31]:
+              - img [ref=e32]
+          - combobox [disabled] [ref=e35]:
+            - option "請先選擇遊戲" [selected]
+    - contentinfo [ref=e37]:
+      - generic [ref=e38]:
+        - link "取消建立" [ref=e39] [cursor=pointer]:
+          - /url: /
+          - button "取消建立" [ref=e40]:
+            - img [ref=e42]
+            - text: 取消建立
+        - button "確認建立" [ref=e45]:
+          - img [ref=e47]
+          - text: 確認建立
+  - alert [ref=e49]
+  - button "Open Next.js Dev Tools" [ref=e55] [cursor=pointer]:
+    - img [ref=e56]
+```
