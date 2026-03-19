@@ -36,7 +36,16 @@ async function apiPost<T>(path: string, body: unknown, token?: string): Promise<
   return res.json() as T;
 }
 
+async function apiGet<T>(path: string, token?: string): Promise<T> {
+  const headers: Record<string, string> = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const res = await fetch(`${API_ORIGIN}${path}`, { headers });
+  if (!res.ok) throw new Error(`GET ${path} → ${res.status}`);
+  return res.json() as T;
+}
+
 interface GuestResp { token: string; user_id: string }
+interface RoomState { id: string; players: Array<{ nickname: string; user_id: string }>; max_players: number }
 
 /** 建立 N 個 bot guests，並讓它們加入 roomId */
 async function spawnBots(
@@ -51,8 +60,15 @@ async function spawnBots(
     ),
   );
 
-  // join via API
-  await Promise.all(guests.map((g) => apiPost(`/api/rooms/${roomId}/join`, {}, g.token)));
+  // join via API (sequential to avoid race conditions on the backend)
+  for (const g of guests) {
+    await apiPost(`/api/rooms/${roomId}/join`, {}, g.token);
+  }
+
+  // verify backend has all players
+  const roomState = await apiGet<RoomState>(`/api/rooms/${roomId}`, guests[0].token);
+  console.log(`  📋  後端房間人數：${roomState.players.length}/${roomState.max_players}`);
+  roomState.players.forEach((p) => console.log(`       - ${p.nickname}`));
 
   // open browser contexts and navigate
   const contexts = await Promise.all(guests.map(() => browser.newContext()));
@@ -110,6 +126,13 @@ test("A: 手動建立房間，9 個 bot 自動加入", async () => {
     botContexts.push(...bots);
 
     console.log("\n✅  9 個 bot 全部進入等待室");
+
+    // reload 房主頁面 → 確認前端是否能看到全部玩家（診斷 polling 缺失）
+    await hostPage.reload();
+    const bannerText = await hostPage.getByRole("status").textContent();
+    console.log(`\n🔍  房主頁面 reload 後 banner：${bannerText}`);
+    console.log("   （如果人數沒到 10，代表後端有問題；如果到 10，代表前端沒有 real-time 更新）\n");
+
     console.log("   你現在可以在房主視窗按「開始遊戲」");
     console.log("   關閉視窗或按 Ctrl+C 結束測試\n");
 
