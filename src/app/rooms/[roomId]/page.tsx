@@ -115,10 +115,21 @@ export default function WaitingRoomPage() {
     }
   }, [roomId, router]);
 
-  const handleStartGame = useCallback(() => {
+  const handleStartGame = useCallback(async () => {
     if (!isHost || !room) return;
     setStarting(true);
-    router.push(`/game/${room.id}`);
+    try {
+      const ch = channelRef.current;
+      if (ch) {
+        await ch.push("start_game", {});
+      } else {
+        // Fallback: navigate directly if channel not available
+        router.push(`/game/${room.id}`);
+      }
+    } catch {
+      setStarting(false);
+      setError("開始遊戲失敗");
+    }
   }, [isHost, room, router]);
 
   if (loading) {
