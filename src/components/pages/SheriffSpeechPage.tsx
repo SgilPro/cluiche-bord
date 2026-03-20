@@ -1,43 +1,74 @@
 "use client";
 
-import Card from "@/components/ui/Card";
+import { ChevronRight } from "lucide-react";
 import Header from "@/components/ui/Header";
+import NotificationBanner from "@/components/ui/NotificationBanner";
+import PlayerCardGrid from "@/components/ui/PlayerCardGrid";
+import ActionFooter from "@/components/ui/ActionFooter";
 import { getAlivePlayers } from "./phase-types";
 import type { PhasePageProps } from "./phase-types";
 
 export default function SheriffSpeechPage({
   state,
-  roomId,
+  onAction,
 }: PhasePageProps) {
   const { day_number, sub_phase } = state;
-  const alive = getAlivePlayers(state.players);
+
+  const isTieSpeech = sub_phase === "sheriff_tie_speech";
+
+  // Fallback: show all alive players (candidates not in GameState yet)
+  const alivePlayers = getAlivePlayers(state.players);
+
+  const cards = alivePlayers.map((p) => ({
+    player: p,
+    seatLabel: String(p.seat_index + 1).padStart(2, "0"),
+  }));
+
+  const handleAdvance = () => {
+    onAction("advance", {});
+  };
 
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--background-primary)] pb-24">
+    <div
+      className="flex min-h-screen flex-col pb-24"
+      style={{ background: "var(--background-surface)" }}
+    >
       <Header
-        title={`第 ${day_number} 天 · 警長競選發言`}
+        title={
+          isTieSpeech
+            ? `第 ${day_number} 天 · 平票重選發言`
+            : `第 ${day_number} 天 · 警長競選發言`
+        }
         variant="werewolf"
       />
+
+      <NotificationBanner
+        message={isTieSpeech ? "平票！候選人依序補充發言" : "候選人依序發言中"}
+      />
+
       <main className="flex flex-1 flex-col gap-4 px-4 py-4">
-        <Card>
-          <p className="text-[var(--text-secondary)]">
-            {sub_phase === "sheriff_tie_speech"
-              ? "同票發言"
-              : "競選玩家請依序發言"}
-          </p>
-          <ul className="mt-3 space-y-2">
-            {alive.map((p) => (
-              <li
-                key={p.id}
-                className="rounded-lg bg-[var(--background-muted)] px-3 py-2 text-[var(--text-on-dark)]"
-              >
-                座位 {p.seat_index + 1}
-              </li>
-            ))}
-          </ul>
-        </Card>
-        <p className="text-xs text-[var(--text-secondary)]">房間 {roomId}</p>
+        {/* Orange accent bar */}
+        <div
+          className="rounded-xl px-4 py-3 text-sm font-medium"
+          style={{
+            background: "var(--accent-tertiary, #C17A30)",
+            color: "#fff",
+          }}
+        >
+          {isTieSpeech ? "平票重選：候選人補充發言" : "競選發言：候選人依序說明競選理由"}
+        </div>
+
+        <PlayerCardGrid cards={cards} disabled />
       </main>
+
+      <ActionFooter
+        variant="light"
+        right={{
+          label: "強制推進",
+          icon: <ChevronRight size={16} />,
+          onClick: handleAdvance,
+        }}
+      />
     </div>
   );
 }
