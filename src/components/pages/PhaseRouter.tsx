@@ -7,11 +7,13 @@ import {
   DaySpeechPage,
   DayVotePage,
   HunterShootPage,
+  LastWordPage,
   NightHunterCheckPage,
   NightSeerPage,
   NightWitchPage,
   NightWolvesPage,
   SheriffFinalWithdrawPage,
+  SheriffHandoverPage,
   SheriffRunPage,
   SheriffSpeechPage,
   SheriffVotePage,
@@ -82,7 +84,9 @@ export default function PhaseRouter({ state, roomId, myPlayerId, onAction }: Pha
       case "hunter_shoot":
         return <HunterShootPage {...props} />;
       case "last_word":
+        return <LastWordPage {...props} />;
       case "sheriff_handover":
+        return <SheriffHandoverPage {...props} />;
       default:
         return <PlaceholderPhasePage {...props} subPhase={sub_phase} />;
     }
