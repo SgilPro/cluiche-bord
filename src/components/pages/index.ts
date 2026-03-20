@@ -11,3 +11,8 @@ export { default as SheriffFinalWithdrawPage } from "./SheriffFinalWithdrawPage"
 export { default as SheriffRunPage } from "./SheriffRunPage";
 export { default as SheriffSpeechPage } from "./SheriffSpeechPage";
 export { default as SheriffVotePage } from "./SheriffVotePage";
+export { default as VictoryPage } from "./VictoryPage";
+export { default as RoleRevealScreen } from "./RoleRevealScreen";
+export { default as NightOpeningScreen } from "./NightOpeningScreen";
+export { default as DayOpeningScreen } from "./DayOpeningScreen";
+export { default as SheriffOpeningScreen } from "./SheriffOpeningScreen";

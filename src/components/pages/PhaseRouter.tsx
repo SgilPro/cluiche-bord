@@ -1,6 +1,7 @@
 "use client";
 
 import type { GameState, SubPhase } from "@/lib/games/werewolf/types";
+import type { WerewolfPushEvent } from "@/lib/channel";
 import {
   DayAnnounceDeathsPage,
   DaySpeechPage,
@@ -20,6 +21,8 @@ import type { PhasePageProps } from "./phase-types";
 interface PhaseRouterProps {
   state: GameState;
   roomId: string;
+  myPlayerId: string;
+  onAction: (event: WerewolfPushEvent, payload: Record<string, unknown>) => void;
 }
 
 function PlaceholderPhasePage({
@@ -39,8 +42,8 @@ function PlaceholderPhasePage({
   );
 }
 
-export default function PhaseRouter({ state, roomId }: PhaseRouterProps) {
-  const props: PhasePageProps = { state, roomId };
+export default function PhaseRouter({ state, roomId, myPlayerId, onAction }: PhaseRouterProps) {
+  const props: PhasePageProps = { state, roomId, myPlayerId, onAction };
   const { phase, sub_phase } = state;
 
   if (phase === "night") {

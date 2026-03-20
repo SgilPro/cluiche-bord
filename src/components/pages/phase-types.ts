@@ -4,10 +4,13 @@
  */
 
 import type { GameState, Player } from "@/lib/games/werewolf/types";
+import type { WerewolfPushEvent } from "@/lib/channel";
 
 export interface PhasePageProps {
   state: GameState;
   roomId: string;
+  myPlayerId: string;
+  onAction: (event: WerewolfPushEvent, payload: Record<string, unknown>) => void;
 }
 
 export interface NightActionPayload {
