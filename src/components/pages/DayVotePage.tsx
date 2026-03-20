@@ -1,43 +1,90 @@
 "use client";
 
-import Button from "@/components/ui/Button";
-import Card from "@/components/ui/Card";
+import { useState } from "react";
+import { Crown } from "lucide-react";
 import Header from "@/components/ui/Header";
+import NotificationBanner from "@/components/ui/NotificationBanner";
+import PhaseTimer from "@/components/ui/PhaseTimer";
+import PlayerCardGrid from "@/components/ui/PlayerCardGrid";
+import ActionFooter from "@/components/ui/ActionFooter";
 import { getAlivePlayers } from "./phase-types";
 import type { PhasePageProps } from "./phase-types";
 
-export default function DayVotePage({ state, roomId }: PhasePageProps) {
-  const { day_number } = state;
+export default function DayVotePage({
+  state,
+  myPlayerId,
+  onAction,
+}: PhasePageProps) {
+  const { day_number, sheriff_id, timer_ends_at } = state;
   const alive = getAlivePlayers(state.players);
 
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const isHost = state.players[0]?.id === myPlayerId;
+
+  const cards = alive.map((p) => ({
+    player: p,
+    seatLabel: String(p.seat_index + 1).padStart(2, "0"),
+    isSelected: p.id === selectedId,
+    badge:
+      p.id === sheriff_id ? (
+        <Crown size={14} className="text-[var(--accent-primary)]" />
+      ) : undefined,
+  }));
+
+  const handleSelect = (playerId: string) => {
+    setSelectedId((prev) => (prev === playerId ? null : playerId));
+  };
+
+  const handleConfirm = () => {
+    if (!selectedId) return;
+    onAction("day_vote", { target_id: selectedId });
+  };
+
+  const handleCancel = () => {
+    setSelectedId(null);
+  };
+
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--background-primary)] pb-24">
+    <div className="flex min-h-screen flex-col bg-[var(--background-surface)] pb-24">
       <Header
         title={`第 ${day_number} 天 · 放逐投票`}
         variant="werewolf"
       />
-      <main className="flex flex-1 flex-col gap-4 px-4 py-4">
-        <Card>
-          <p className="text-[var(--text-secondary)]">
-            請投票選擇要放逐的玩家
-          </p>
-          <ul className="mt-3 space-y-2">
-            {alive.map((p) => (
-              <li key={p.id} className="flex items-center justify-between gap-2">
-                <span className="rounded-lg bg-[var(--background-muted)] px-3 py-2 text-[var(--text-on-dark)] flex-1">
-                  座位 {p.seat_index + 1}
-                </span>
-                <Button variant="secondary" className="shrink-0">
-                  投票
-                </Button>
-              </li>
-            ))}
-          </ul>
-        </Card>
-        <p className="text-xs text-[var(--text-secondary)]">
-          房間 {roomId} · 此階段由 Channel 提供完整互動
-        </p>
+
+      <NotificationBanner message="請點選你認為是狼人的玩家進行放逐投票" />
+
+      {timer_ends_at !== undefined && (
+        <div className="mx-auto flex w-full max-w-[430px] items-center justify-center px-4 py-2">
+          <PhaseTimer timerEndsAt={timer_ends_at} className="text-2xl" />
+        </div>
+      )}
+
+      <main className="mx-auto w-full max-w-[430px] flex-1 px-4 py-4">
+        <PlayerCardGrid cards={cards} onSelect={handleSelect} />
       </main>
+
+      <ActionFooter
+        variant="light"
+        left={
+          isHost
+            ? {
+                label: "強制推進",
+                onClick: () => onAction("advance", {}),
+              }
+            : undefined
+        }
+        center={{
+          label: "取消選擇",
+          onClick: handleCancel,
+          disabled: selectedId === null,
+        }}
+        right={{
+          label: "確認放逐",
+          onClick: handleConfirm,
+          disabled: selectedId === null,
+        }}
+      />
     </div>
   );
 }

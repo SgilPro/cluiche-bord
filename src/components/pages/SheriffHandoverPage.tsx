@@ -8,20 +8,19 @@ import ActionFooter from "@/components/ui/ActionFooter";
 import { getAlivePlayers } from "./phase-types";
 import type { PhasePageProps } from "./phase-types";
 
-export default function HunterShootPage({
+export default function SheriffHandoverPage({
   state,
   myPlayerId,
   onAction,
 }: PhasePageProps) {
-  const { day_number, players } = state;
+  const { day_number, sheriff_id, players } = state;
   const alive = getAlivePlayers(players);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const hunter = players.find((p) => p.role === "hunter");
-  const isHunter = hunter?.id === myPlayerId;
+  const isSheriff = myPlayerId === sheriff_id;
 
-  // Alive players excluding self (hunter)
+  // Alive players excluding the sheriff themselves
   const targets = alive.filter((p) => p.id !== myPlayerId);
 
   const cards = targets.map((p) => ({
@@ -34,21 +33,25 @@ export default function HunterShootPage({
     setSelectedId((prev) => (prev === playerId ? null : playerId));
   };
 
-  const handleShoot = () => {
+  const handleHandover = () => {
     if (!selectedId) return;
-    onAction("night_action", { action: "hunter_shoot", target_id: selectedId });
+    onAction("sheriff_action", { action: "handover", target_id: selectedId });
   };
 
-  if (!isHunter) {
+  const handleDiscard = () => {
+    onAction("sheriff_action", { action: "discard" });
+  };
+
+  if (!isSheriff) {
     return (
       <div className="flex min-h-screen flex-col bg-[var(--background-surface)]">
         <Header
-          title={`第 ${day_number} 天 · 獵人開槍`}
+          title={`第 ${day_number} 天 · 警徽交接`}
           variant="werewolf"
         />
         <main className="mx-auto flex w-full max-w-[430px] flex-1 flex-col items-center justify-center gap-3 px-4">
           <p className="text-lg font-medium text-[var(--text-secondary)]">
-            獵人正在決定是否開槍...
+            警長正在交接警徽...
           </p>
         </main>
       </div>
@@ -58,11 +61,11 @@ export default function HunterShootPage({
   return (
     <div className="flex min-h-screen flex-col bg-[var(--background-surface)] pb-24">
       <Header
-        title={`第 ${day_number} 天 · 獵人開槍`}
+        title={`第 ${day_number} 天 · 警徽交接`}
         variant="werewolf"
       />
 
-      <NotificationBanner message="你被放逐（或夜晚死亡）。你有一槍，選擇帶走一位玩家。" />
+      <NotificationBanner message="你是警長，請選擇交接警徽給誰，或丟入水中" />
 
       <main className="mx-auto w-full max-w-[430px] flex-1 px-4 py-4">
         <PlayerCardGrid cards={cards} onSelect={handleSelect} />
@@ -70,13 +73,13 @@ export default function HunterShootPage({
 
       <ActionFooter
         variant="light"
-        center={{
-          label: "不開槍",
-          onClick: () => onAction("advance", {}),
+        left={{
+          label: "警徽入水",
+          onClick: handleDiscard,
         }}
         right={{
-          label: "確認開槍",
-          onClick: handleShoot,
+          label: "交接警徽",
+          onClick: handleHandover,
           disabled: selectedId === null,
         }}
       />
