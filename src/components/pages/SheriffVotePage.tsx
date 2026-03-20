@@ -1,44 +1,97 @@
 "use client";
 
-import Button from "@/components/ui/Button";
-import Card from "@/components/ui/Card";
+import { useState } from "react";
+import { ChevronRight, Crown } from "lucide-react";
 import Header from "@/components/ui/Header";
+import NotificationBanner from "@/components/ui/NotificationBanner";
+import PlayerCardGrid from "@/components/ui/PlayerCardGrid";
+import ActionFooter from "@/components/ui/ActionFooter";
 import { getAlivePlayers } from "./phase-types";
 import type { PhasePageProps } from "./phase-types";
 
-export default function SheriffVotePage({ state, roomId }: PhasePageProps) {
-  const { day_number, sub_phase } = state;
-  const alive = getAlivePlayers(state.players);
+export default function SheriffVotePage({
+  state,
+  onAction,
+}: PhasePageProps) {
+  const { day_number, sub_phase, sheriff_id } = state;
 
-  const title =
-    sub_phase === "sheriff_tie_vote" ? "警長同票投票" : "警長投票";
+  const isTieVote = sub_phase === "sheriff_tie_vote";
+
+  // Fallback: show all alive players (candidates not explicitly in GameState)
+  const alivePlayers = getAlivePlayers(state.players);
+
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const cards = alivePlayers.map((p) => ({
+    player: p,
+    seatLabel: String(p.seat_index + 1).padStart(2, "0"),
+    isSelected: p.id === selectedId,
+    badge:
+      p.id === sheriff_id ? (
+        <Crown size={14} style={{ color: "var(--accent-tertiary, #C17A30)" }} />
+      ) : undefined,
+  }));
+
+  const handleSelect = (playerId: string) => {
+    setSelectedId((prev) => (prev === playerId ? null : playerId));
+  };
+
+  const handleConfirmVote = () => {
+    if (!selectedId) return;
+    onAction("sheriff_action", { action: "vote", target_id: selectedId });
+  };
+
+  const handleAdvance = () => {
+    onAction("advance", {});
+  };
 
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--background-primary)] pb-24">
+    <div
+      className="flex min-h-screen flex-col pb-24"
+      style={{ background: "var(--background-surface)" }}
+    >
       <Header
-        title={`第 ${day_number} 天 · ${title}`}
+        title={
+          isTieVote
+            ? `第 ${day_number} 天 · 平票重選`
+            : `第 ${day_number} 天 · 警長投票`
+        }
         variant="werewolf"
       />
+
+      <NotificationBanner
+        message={isTieVote ? "平票重選！請再次投票選出警長" : "請投票選出警長"}
+      />
+
       <main className="flex flex-1 flex-col gap-4 px-4 py-4">
-        <Card>
-          <p className="text-[var(--text-secondary)]">
-            請投票選出警長
-          </p>
-          <ul className="mt-3 space-y-2">
-            {alive.map((p) => (
-              <li key={p.id} className="flex items-center justify-between gap-2">
-                <span className="flex-1 rounded-lg bg-[var(--background-muted)] px-3 py-2 text-[var(--text-on-dark)]">
-                  座位 {p.seat_index + 1}
-                </span>
-                <Button variant="secondary" className="shrink-0">
-                  投票
-                </Button>
-              </li>
-            ))}
-          </ul>
-        </Card>
-        <p className="text-xs text-[var(--text-secondary)]">房間 {roomId}</p>
+        {/* Orange accent bar */}
+        <div
+          className="rounded-xl px-4 py-3 text-sm font-medium"
+          style={{
+            background: "var(--accent-tertiary, #C17A30)",
+            color: "#fff",
+          }}
+        >
+          {isTieVote ? "平票重選：請從候選人中投出警長" : "警長投票：點選候選人進行投票"}
+        </div>
+
+        <PlayerCardGrid cards={cards} onSelect={handleSelect} />
       </main>
+
+      <ActionFooter
+        variant="light"
+        left={{
+          label: "強制推進",
+          icon: <ChevronRight size={16} />,
+          onClick: handleAdvance,
+        }}
+        right={{
+          label: "確認投票",
+          icon: <Crown size={16} />,
+          onClick: handleConfirmVote,
+          disabled: !selectedId,
+        }}
+      />
     </div>
   );
 }
