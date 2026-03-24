@@ -11,26 +11,38 @@ import {
   setToken,
 } from "./client";
 
-describe("getApiOrigin", () => {
-  const originalEnv = process.env;
+vi.mock("next/config", () => ({
+  default: vi.fn(),
+}));
 
-  afterEach(() => {
-    process.env = { ...originalEnv };
+describe("getApiOrigin", () => {
+  afterEach(async () => {
     setApiOriginForTesting(undefined);
+    const { default: getConfig } = await import("next/config");
+    vi.mocked(getConfig).mockReset();
   });
 
-  it("returns NEXT_PUBLIC_API_ORIGIN when set", () => {
-    process.env.NEXT_PUBLIC_API_ORIGIN = "http://localhost:4000";
+  it("returns publicRuntimeConfig.apiOrigin when set", async () => {
+    const { default: getConfig } = await import("next/config");
+    vi.mocked(getConfig).mockReturnValue({
+      publicRuntimeConfig: { apiOrigin: "http://localhost:4000" },
+    });
     expect(getApiOrigin()).toBe("http://localhost:4000");
   });
 
-  it("returns fallback when NEXT_PUBLIC_API_ORIGIN is empty", () => {
-    process.env.NEXT_PUBLIC_API_ORIGIN = "";
+  it("returns fallback when publicRuntimeConfig.apiOrigin is empty", async () => {
+    const { default: getConfig } = await import("next/config");
+    vi.mocked(getConfig).mockReturnValue({
+      publicRuntimeConfig: { apiOrigin: "" },
+    });
     expect(getApiOrigin()).toBe("https://cluiche-bord.zeabur.app");
   });
 
-  it("uses overridden value when set for testing", () => {
-    process.env.NEXT_PUBLIC_API_ORIGIN = "http://env.example.com";
+  it("uses overridden value when set for testing", async () => {
+    const { default: getConfig } = await import("next/config");
+    vi.mocked(getConfig).mockReturnValue({
+      publicRuntimeConfig: { apiOrigin: "http://env.example.com" },
+    });
     setApiOriginForTesting("http://test.example.com");
     expect(getApiOrigin()).toBe("http://test.example.com");
   });

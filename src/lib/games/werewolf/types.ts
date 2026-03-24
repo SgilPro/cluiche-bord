@@ -55,6 +55,8 @@ export type RoleId = "seer" | "witch" | "hunter" | "wolf" | "villager";
 
 export interface Player {
   id: string;
+  /** Populated by backend. Fallback to seat label when absent. */
+  nickname?: string;
   alive: boolean;
   role: RoleId | null;
   seat_index: number;

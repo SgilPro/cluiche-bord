@@ -69,11 +69,17 @@ export default function WaitingRoomPage() {
     ch.connect()
       .then(() => ch.join(roomId))
       .then(() => {
-        ch.on("state", () => {
-          router.push(`/game/${roomId}`);
+        ch.on("state", (payload) => {
+          const { phase } = payload as { phase?: string };
+          if (phase && phase !== "waiting") {
+            router.push(`/game/${roomId}`);
+          }
         });
-        ch.on("phase_change", () => {
-          router.push(`/game/${roomId}`);
+        ch.on("phase_change", (payload) => {
+          const { phase } = payload as { phase?: string };
+          if (phase && phase !== "waiting") {
+            router.push(`/game/${roomId}`);
+          }
         });
       })
       .catch(() => {
@@ -121,7 +127,21 @@ export default function WaitingRoomPage() {
     try {
       const ch = channelRef.current;
       if (ch) {
-        await ch.push("start_game", {});
+        // TODO: derive config from room.variant_id once backend supports it (api-requirements.md #2)
+        const basic10Config = {
+          rules: { sheriff: true, massacre: false, witch_self_rescue: false },
+          roles: [
+            { role: "seer", count: 1 },
+            { role: "witch", count: 1 },
+            { role: "hunter", count: 1 },
+            { role: "wolf", count: 3 },
+            { role: "villager", count: 4 },
+          ],
+        };
+        await ch.push("start_game", {
+          config: basic10Config,
+          player_ids: room.players.map((p) => p.user_id),
+        });
       } else {
         // Fallback: navigate directly if channel not available
         router.push(`/game/${room.id}`);

@@ -141,7 +141,7 @@ export default function CreateRoomPage() {
           </div>
 
           {/* Dashed separator between section 1 and section 2 */}
-          <div className="border-ticket-top mx-[24px]" />
+          <div className="ticket-divider mx-[24px]" />
 
           {/* Section 2: 房間代碼 + QR — all corners rounded */}
           <div className="flex-[7] rounded-[24px] bg-[var(--background-muted)] px-[60px] py-5">
@@ -169,7 +169,7 @@ export default function CreateRoomPage() {
 
         {/* Footer: static, part of flex flow */}
         <footer className="bg-[var(--background-muted)]">
-          <div className="border-ticket-top mx-[24px]" />
+          <div className="ticket-divider mx-[24px]" />
           <div className="flex h-[43px] justify-end">
             <Button
               type="button"
@@ -193,11 +193,11 @@ export default function CreateRoomPage() {
         pageTitle="建立房間"
         pageTitleAlign="center"
       />
-      <main className="flex-1 min-h-0 overflow-y-auto rounded-b-[24px] bg-[var(--background-muted)]">
+      <main className="flex flex-col flex-1 min-h-0 overflow-y-auto rounded-b-[24px] bg-[var(--background-muted)]">
           <form
             id="create-room-form"
             onSubmit={handleSubmit}
-            className="mx-auto flex w-full max-w-[360px] flex-col gap-4 px-4 py-6"
+            className="mx-auto my-auto flex w-full max-w-[360px] flex-col gap-4 px-4 py-6"
           >
             <FormField
               label="房間名稱"
@@ -278,7 +278,7 @@ export default function CreateRoomPage() {
             )}
           </form>
       </main>
-      <div className="border-ticket-top mx-[24px]" />
+      <div className="ticket-divider mx-[24px]" />
       <footer className="bg-[var(--background-muted)]">
         <div className="flex h-[42px] items-stretch justify-between">
           <Link href="/" className="block h-full">

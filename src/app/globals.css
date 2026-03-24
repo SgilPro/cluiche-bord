@@ -63,3 +63,9 @@ body {
   border-top-color: var(--border-ticket-color);
   border-image: var(--border-ticket-dash) 1;
 }
+
+/* Ticket-style dashed divider using background-image (no border) */
+.ticket-divider {
+  height: 1px;
+  background-image: var(--border-ticket-dash);
+}

@@ -8,19 +8,21 @@ import type {
   ListRoomsResponse,
   Room,
 } from "./types";
+import getConfig from "next/config";
 
 const DEFAULT_ORIGIN = "https://cluiche-bord.zeabur.app";
 
 let apiOriginOverride: string | undefined;
 
 /**
- * Configurable API base origin (e.g. NEXT_PUBLIC_API_ORIGIN).
+ * Configurable API base origin via publicRuntimeConfig.apiOrigin.
  * Use setApiOriginForTesting in tests to override.
  */
 export function getApiOrigin(): string {
   if (apiOriginOverride !== undefined) return apiOriginOverride;
-  const env = process.env.NEXT_PUBLIC_API_ORIGIN;
-  return (typeof env === "string" && env.trim() !== "" ? env.trim() : null) ?? DEFAULT_ORIGIN;
+  const { publicRuntimeConfig } = getConfig() ?? {};
+  const origin = publicRuntimeConfig?.apiOrigin;
+  return (typeof origin === "string" && origin.trim() !== "" ? origin.trim() : null) ?? DEFAULT_ORIGIN;
 }
 
 /**

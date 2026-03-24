@@ -120,10 +120,20 @@ test("A: 手動建立房間，9 個 bot 自動加入", async () => {
     // 等你建立房間並進入 /rooms/:id
     const roomId = await waitForRoomUrl(hostPage);
 
-    // 9 個 bot 加入
-    console.log("🤖  派出 9 個 bot...");
-    const bots = await spawnBots(browser, roomId, 9, 0);
-    botContexts.push(...bots);
+    // 9 個 bot 分三批加入
+    console.log("🤖  第 1 批 bot（3 人）加入...");
+    const bots1 = await spawnBots(browser, roomId, 3, 0);
+    botContexts.push(...bots1);
+    await new Promise((r) => setTimeout(r, 2_000));
+
+    console.log("🤖  第 2 批 bot（3 人）加入...");
+    const bots2 = await spawnBots(browser, roomId, 3, 3);
+    botContexts.push(...bots2);
+    await new Promise((r) => setTimeout(r, 5_000));
+
+    console.log("🤖  第 3 批 bot（3 人）加入...");
+    const bots3 = await spawnBots(browser, roomId, 3, 6);
+    botContexts.push(...bots3);
 
     console.log("\n✅  9 個 bot 全部進入等待室");
 
@@ -170,10 +180,20 @@ test("B: 手動建立房間 + 手動加入，8 個 bot 自動加入", async () =
     // 等第二個視窗也進入等待室（確認 URL）
     await playerPage.waitForURL(/\/rooms\/[A-Z0-9]+$/, { timeout: 60_000 });
 
-    // 8 個 bot 加入
-    console.log("🤖  派出 8 個 bot...");
-    const bots = await spawnBots(browser, roomId, 8, 1);
-    botContexts.push(...bots);
+    // 8 個 bot 分三批加入
+    console.log("🤖  第 1 批 bot（3 人）加入...");
+    const bots1 = await spawnBots(browser, roomId, 3, 1);
+    botContexts.push(...bots1);
+    await new Promise((r) => setTimeout(r, 2_000));
+
+    console.log("🤖  第 2 批 bot（3 人）加入...");
+    const bots2 = await spawnBots(browser, roomId, 3, 4);
+    botContexts.push(...bots2);
+    await new Promise((r) => setTimeout(r, 5_000));
+
+    console.log("🤖  第 3 批 bot（2 人）加入...");
+    const bots3 = await spawnBots(browser, roomId, 2, 7);
+    botContexts.push(...bots3);
 
     console.log("\n✅  8 個 bot 全部進入等待室");
     console.log("   你現在可以在房主視窗按「開始遊戲」");

@@ -109,6 +109,13 @@
 - **CLAUDE.md @import**：`CLAUDE.md` 使用 `@path` 語法引用 `.ai/` 下的檔案。若 Claude Code 版本不支援，可改為直接 include 或 copy 內容。
 - **ticket-04d 狀態**：`components/pages/` 已有所有遊戲階段元件，PhaseRouter 也已整合到 `/game/[roomId]`，但後端 Channel 整合尚未完整（目前為 mock 資料）。ticket-04d 留為「待整合後端資料」狀態。
 
+### Ticket 05 計劃期（待 review）
+
+- **玩家暱稱缺口**：`GameState.Player` 只有 `id`、`alive`、`role`、`seat_index`，沒有 `nickname`。遊戲中玩家卡片需要顯示暱稱，目前不確定後端 state event 是否會帶名稱。**需確認：後端會補 nickname 到 state，還是前端需要從等待室資料 cache 帶入？**
+- **avatar 缺口**：遊戲中玩家卡片需要頭像，但 state 沒有 avatar 欄位。暫定做法：用 seat_index % avatar_count 固定對應（待確認是否可接受）。
+- **過場推進時機**：天黑/天亮過場畫面（~10s）是由前端 timer 自動推進，不等後端。若期間收到新的 state event 則立即切換。此為預設做法，如需後端控制請告知。
+- **RoleReveal 時機**：角色揭示畫面（S0）在收到第一個 night state 時顯示（state.players[me].role 有值），倒數 5s 後進入天黑過場。此為前端自主邏輯，不依賴額外的 channel event。
+
 ---
 
 ## 6. Ticket 索引
