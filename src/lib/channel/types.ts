@@ -5,6 +5,8 @@
 
 export type Phase = "night" | "day";
 export type SubPhase =
+  | "role_reveal"
+  | "night_opening"
   | "wolves"
   | "witch"
   | "seer"
@@ -24,6 +26,7 @@ export type SubPhase =
 
 export interface ChannelPlayer {
   id: string;
+  nickname?: string | null;
   alive: boolean;
   role: "seer" | "witch" | "hunter" | "wolf" | "villager" | null;
   seat_index: number;
@@ -79,4 +82,15 @@ export type WerewolfChannelEvent =
   | "sheriff_elected"
   | "death_announcement"
   | "victory"
-  | "role_action_result";
+  | "role_action_result"
+  | "vote_tie"
+  | "vote_no_exile";
+
+export interface VoteTiePayload {
+  /** Player IDs that were tied */
+  tied_ids: string[];
+}
+
+export interface VoteNoExilePayload {
+  reason: "tie" | "no_majority";
+}

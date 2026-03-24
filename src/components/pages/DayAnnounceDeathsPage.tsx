@@ -22,7 +22,7 @@ export default function DayAnnounceDeathsPage({
   const displayName = (id: string) => {
     const p = players.find((pl) => pl.id === id);
     if (!p) return id;
-    return (p as typeof p & { nickname?: string }).nickname ?? `座位 ${p.seat_index + 1}`;
+    return p.nickname ?? `座位 ${p.seat_index + 1}`;
   };
 
   return (
@@ -55,7 +55,7 @@ export default function DayAnnounceDeathsPage({
                   {displayName(deathPlayer.id)}
                 </p>
                 <p className="text-xs text-[var(--text-secondary)]">
-                  座位 {deathPlayer.seat_index + 1}
+                  座位 #{deathPlayer.seat_index + 1}
                 </p>
               </div>
             </div>

@@ -9,7 +9,7 @@ import type { PhasePageProps } from "./phase-types";
 import type { Player } from "@/lib/games/werewolf/types";
 
 function getDisplayName(player: Player): string {
-  return (player as Player & { nickname?: string }).nickname ?? `座位 ${player.seat_index + 1}`;
+  return player.nickname ?? `座位 ${player.seat_index + 1}`;
 }
 
 export default function DaySpeechPage({

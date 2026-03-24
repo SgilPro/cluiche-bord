@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import type { Player, VictoryFaction } from "@/lib/games/werewolf/types";
+import type { VictoryFaction, Player } from "@/lib/games/werewolf/types";
 
 const ROLE_LABELS: Record<string, string> = {
   wolf: "狼人",
@@ -53,10 +53,7 @@ export default function VictoryPage({ faction, players, onReturn }: VictoryPageP
               className="flex items-center justify-between rounded-xl bg-white/10 px-4 py-3"
             >
               <span className={`text-sm ${titleTextClass}`}>
-                座位 {p.seat_index + 1}
-                {(p as Player & { nickname?: string }).nickname
-                  ? ` · ${(p as Player & { nickname?: string }).nickname}`
-                  : ""}
+                {p.nickname ?? `座位 ${p.seat_index + 1}`}
               </span>
               <span className={`text-sm font-bold ${p.role === "wolf" ? "text-red-400" : titleTextClass}`}>
                 {p.role ? (ROLE_LABELS[p.role] ?? p.role) : "未知"}

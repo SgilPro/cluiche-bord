@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import PhaseRouter from "@/components/pages/PhaseRouter";
+import NotificationBanner from "@/components/ui/NotificationBanner";
 import {
   VictoryPage,
   RoleRevealScreen,
@@ -15,13 +16,8 @@ import type { WerewolfChannelApi, WerewolfPushEvent } from "@/lib/channel";
 import { createWerewolfChannel } from "@/lib/channel";
 import { getApiOrigin, getToken, getUserId } from "@/lib/api";
 
-/** Opening/transition screens managed by the game page */
-type TransitionScreen =
-  | "role_reveal"
-  | "night_opening"
-  | "day_opening"
-  | "sheriff_opening"
-  | null;
+/** Overlay transition screens triggered by phase_change (timer-based) */
+type TransitionScreen = "day_opening" | "sheriff_opening" | null;
 
 export default function GameRoomPage() {
   const params = useParams();
@@ -31,11 +27,10 @@ export default function GameRoomPage() {
   const [victoryFaction, setVictoryFaction] = useState<VictoryFaction | null>(null);
   const [transitionScreen, setTransitionScreen] = useState<TransitionScreen>(null);
   const [myPlayerId, setMyPlayerId] = useState<string>("");
+  const [voteNotice, setVoteNotice] = useState<"tie" | "no_exile" | null>(null);
 
   /** Keep a ref to the channel so callbacks don't capture stale closures */
   const channelRef = useRef<WerewolfChannelApi | null>(null);
-  /** Track whether the first night has been handled already */
-  const seenFirstNightRef = useRef(false);
   const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearTransitionAfter = useCallback((ms: number) => {
@@ -65,47 +60,24 @@ export default function GameRoomPage() {
     ch.connect()
       .then(() => ch.join(roomId))
       .then(() => {
-        // Full game state broadcast
+        // Full game state broadcast – role_reveal / night_opening driven by sub_phase
         ch.on("state", (payload) => {
-          const state = payload as GameState;
-          setGameState(state);
-
-          // First night: show role reveal (5s) → night opening (10s) → clear
-          if (
-            state.phase === "night" &&
-            state.sub_phase === "wolves" &&
-            state.day_number === 1 &&
-            !seenFirstNightRef.current
-          ) {
-            seenFirstNightRef.current = true;
-            setTransitionScreen("role_reveal");
-            if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
-            transitionTimerRef.current = setTimeout(() => {
-              setTransitionScreen("night_opening");
-              clearTransitionAfter(10_000);
-            }, 5_000);
-          }
+          setGameState(payload as GameState);
+          setVoteNotice(null);
         });
 
-        // Phase change: manage transition screens for subsequent phases
+        // Phase change: manage timer-based transition screens for day/sheriff openings
         ch.on("phase_change", (payload) => {
           const { phase, sub_phase } = payload as { phase: string; sub_phase: string };
 
-          // Subsequent nights (first night is handled via state event above)
-          if (phase === "night" && seenFirstNightRef.current) {
-            setTransitionScreen("night_opening");
-            clearTransitionAfter(10_000);
-            return;
-          }
-
-          // Day announce_deaths opening
+          // Day announce_deaths opening (~10s splash)
           if (phase === "day" && sub_phase === "announce_deaths") {
             setTransitionScreen("day_opening");
             clearTransitionAfter(10_000);
             return;
           }
 
-          // Sheriff run opening
+          // Sheriff run opening (~8s splash)
           if (sub_phase === "sheriff_run") {
             setTransitionScreen("sheriff_opening");
             clearTransitionAfter(8_000);
@@ -118,6 +90,10 @@ export default function GameRoomPage() {
           const { faction } = payload as { faction: VictoryFaction };
           setVictoryFaction(faction);
         });
+
+        // Vote resolution notices (clears automatically when next state arrives)
+        ch.on("vote_tie", () => setVoteNotice("tie"));
+        ch.on("vote_no_exile", () => setVoteNotice("no_exile"));
       })
       .catch((err: unknown) => {
         console.error("[GameRoomPage] Channel connection failed:", err);
@@ -149,17 +125,18 @@ export default function GameRoomPage() {
     return <VictoryPage faction={victoryFaction} players={gameState.players} />;
   }
 
-  // Opening transition screens
-  if (transitionScreen === "role_reveal" && gameState) {
+  // role_reveal and night_opening are driven directly by state.sub_phase (backend-controlled)
+  if (gameState?.sub_phase === "role_reveal") {
     const myPlayer = gameState.players.find((p) => p.id === myPlayerId);
     const role = myPlayer?.role ?? "villager";
     return <RoleRevealScreen role={role} />;
   }
 
-  if (transitionScreen === "night_opening" && gameState) {
+  if (gameState?.sub_phase === "night_opening") {
     return <NightOpeningScreen dayNumber={gameState.day_number} />;
   }
 
+  // Timer-based transition screens for day/sheriff openings
   if (transitionScreen === "day_opening" && gameState) {
     return <DayOpeningScreen dayNumber={gameState.day_number} />;
   }
@@ -178,11 +155,19 @@ export default function GameRoomPage() {
   }
 
   return (
-    <PhaseRouter
-      state={gameState}
-      roomId={roomId}
-      myPlayerId={myPlayerId}
-      onAction={onAction}
-    />
+    <>
+      {voteNotice === "tie" && (
+        <NotificationBanner message="投票平票！進入追加發言投票流程" />
+      )}
+      {voteNotice === "no_exile" && (
+        <NotificationBanner message="平票無解，本回合無人出局" />
+      )}
+      <PhaseRouter
+        state={gameState}
+        roomId={roomId}
+        myPlayerId={myPlayerId}
+        onAction={onAction}
+      />
+    </>
   );
 }

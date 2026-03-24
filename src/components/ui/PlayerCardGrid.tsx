@@ -72,10 +72,9 @@ export default function PlayerCardGrid({
                 <User size={20} className="text-[var(--text-secondary)]" />
               </div>
 
-              {/* Nickname or id */}
+              {/* Nickname or seat label fallback */}
               <span className="w-full truncate text-center text-xs text-[var(--text-on-dark)]">
-                {(player as Player & { nickname?: string }).nickname ??
-                  `P${player.seat_index + 1}`}
+                {player.nickname ?? `P${player.seat_index + 1}`}
               </span>
             </button>
           );

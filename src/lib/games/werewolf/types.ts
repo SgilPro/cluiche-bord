@@ -11,6 +11,8 @@ export type Phase = "night" | "day";
 export const PHASES: Phase[] = ["night", "day"];
 
 export type SubPhase =
+  | "role_reveal"
+  | "night_opening"
   | "wolves"
   | "witch"
   | "seer"
@@ -29,6 +31,8 @@ export type SubPhase =
   | "sheriff_handover";
 
 export const SUB_PHASES: SubPhase[] = [
+  "role_reveal",
+  "night_opening",
   "wolves",
   "witch",
   "seer",
