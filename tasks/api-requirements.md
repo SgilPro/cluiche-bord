@@ -11,10 +11,10 @@
 
 **已解決**：AsyncAPI spec 的 `Player` schema 已包含 `nickname: string (nullable)`。
 
-**前端待做**：
-- 更新 `src/lib/channel/types.ts` 的 `ChannelPlayer` interface 加入 `nickname: string | null`
-- 更新 `src/lib/games/werewolf/types.ts` 的對應型別
-- 移除各遊戲 UI 元件中的 `座位 ${seat_index + 1}` fallback，改用 `nickname ?? 座位號`
+**前端已完成**：
+- ✅ `src/lib/channel/types.ts` 的 `ChannelPlayer` interface 加入 `nickname?: string | null`
+- ✅ `src/lib/games/werewolf/types.ts` 的 `Player` 加入 `nickname?: string`
+- ✅ 各遊戲 UI 元件改用 `nickname ?? 座位號`（DayAnnounceDeathsPage、DaySpeechPage、LastWordPage、VictoryPage、PlayerCardGrid）
 
 ---
 
@@ -41,10 +41,10 @@
 
 **已解決**：AsyncAPI spec 的 sub_phase enum 已包含 `role_reveal` 和 `night_opening`。
 
-**前端待做**：
-- 移除前端自行插入過場的 timer workaround（game/[roomId]/page.tsx 的 `seenFirstNightRef` 邏輯）
-- 改為監聽 `phase_change` 或 `state` event 的 `sub_phase === "role_reveal"` / `"night_opening"` 來顯示對應畫面
-- `timer_ends_at` 驅動倒數（若無 timer 則固定顯示後靠 `advance` 推進）
+**前端已完成**：
+- ✅ `SubPhase` 型別加入 `role_reveal` / `night_opening`（werewolf/types.ts + channel/types.ts）
+- ✅ 移除 `seenFirstNightRef` timer workaround；改由 `state.sub_phase` 直接驅動 RoleRevealScreen / NightOpeningScreen
+- （`timer_ends_at` 驅動倒數待後續優化）
 
 ---
 
@@ -80,14 +80,19 @@
 
 ---
 
-## 7. 🟡 `vote_tie` / `vote_no_exile` event 前端尚未處理
+## 7. 🟡 `vote_tie` / `vote_no_exile` event 前端處理
 
-**問題**：spec 新增了這兩個 event，前端目前沒有對應處理。
+**狀態**：基本處理已完成。
 
 - `vote_tie`：放逐投票平票，進入 `exile_tie_speech` → `exile_tie_vote` 流程
 - `vote_no_exile`：二次平票或無多數，本回合無人放逐
 
-**前端待做**：在 PhaseRouter / game page 加入對這兩個 event 的處理（顯示提示或自動切換 UI）。
+**前端已完成**：
+- ✅ `WerewolfChannelEvent` 加入 `vote_tie` / `vote_no_exile`；新增 `VoteTiePayload` / `VoteNoExilePayload` 型別
+- ✅ game page 監聽事件並顯示 NotificationBanner（平票提示 / 無人出局提示）
+- ✅ 收到新 `state` event 時自動清除通知
+
+**待確認**：`exile_tie_speech` / `exile_tie_vote` sub_phase 是否獨立存在，或重用 `speech` / `vote`？（若有獨立 sub_phase 需加入 SubPhase 型別和 PhaseRouter）。
 
 ---
 
@@ -95,10 +100,10 @@
 
 | # | 需求 | 優先級 | 後端狀態 | 前端方案 |
 |---|------|--------|---------|---------|
-| 1 | Player.nickname | ✅ | 已完成 | 前端型別 + UI 待更新 |
+| 1 | Player.nickname | ✅ | 已完成 | ✅ 前端已完成 |
 | 2 | start_game 省略 config | 🔴 | spec 未更新，待確認 | hardcode Basic10 |
-| 3 | role_reveal / night_opening sub_phase | ✅ | 已完成 | 前端 workaround 待移除 |
+| 3 | role_reveal / night_opening sub_phase | ✅ | 已完成 | ✅ 前端已完成 |
 | 4 | timer_ends_at 保證有值 | 🟢 | 待確認 | 可選顯示 |
 | 5 | role_action_result push 設計確認 | ✅ | 已確認 | ✅ |
 | 6 | 等待室玩家加入 channel event | 🟡 | 無 event | REST polling workaround |
-| 7 | vote_tie / vote_no_exile 前端處理 | 🟡 | 已有 event | 前端待實作 |
+| 7 | vote_tie / vote_no_exile 前端處理 | 🟡 | 已有 event | ✅ 基本處理完成 |
