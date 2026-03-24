@@ -14,8 +14,11 @@
 | B Card ticket variant | — | Done | subagent | ✓ |
 | C 文件繁體中文化 | — | Done | subagent | ✓ |
 | D tasks/ 清理 + skill | — | Done | subagent | ✓ |
-| 04d Screens 後端整合 | — | Pending | — | |
 | todo-waiting-room 等待加入頁 UI 修正 | — | Done | subagent | ✓ |
+| 05c 夜晚階段 UI | — | Done | subagent | ✓ |
+| 05d 警長競選 UI | — | Done | subagent | ✓ |
+| 05e 白天流程 UI | — | Done | subagent | ✓ |
+| api-req fixes | — | Done | main | ✓ |
 
 ---
 
@@ -33,6 +36,9 @@
 | todo-02 Create room | 建立房間頁面 | ✓ |
 | todo-03 Waiting room | 等待室頁面 | ✓ |
 | todo-04 Game phases | 遊戲階段元件 | ✓ |
+| 05a Channel 真實整合 | game page 連接 Phoenix Channel | ✓ |
+| 05b 過場畫面 | RoleReveal/NightOpening/DayOpening/SheriffOpening | ✓ |
+| 05f 勝利畫面 | VictoryPage（village/wolves win） | ✓ |
 
 ---
 
