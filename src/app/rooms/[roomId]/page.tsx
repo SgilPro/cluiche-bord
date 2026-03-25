@@ -52,6 +52,22 @@ export default function WaitingRoomPage() {
     fetchRoom();
   }, [fetchRoom]);
 
+  // REST polling every 3s: update player list until game starts
+  useEffect(() => {
+    const id = setInterval(async () => {
+      try {
+        const r = await getRoom(roomId);
+        setRoom(r);
+        if (r.game_status === "playing") {
+          clearInterval(id);
+        }
+      } catch {
+        // non-fatal: keep polling
+      }
+    }, 3_000);
+    return () => clearInterval(id);
+  }, [roomId]);
+
   // Connect to Phoenix Channel so all players receive game-start broadcast
   useEffect(() => {
     if (!roomId) return;
