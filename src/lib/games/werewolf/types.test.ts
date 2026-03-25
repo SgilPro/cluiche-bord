@@ -165,6 +165,14 @@ describe("werewolf types (channel contract)", () => {
       expect(isSubPhase("invalid")).toBe(false);
     });
 
+    it("isSubPhase accepts exile_tie_speech", () => {
+      expect(isSubPhase("exile_tie_speech")).toBe(true);
+    });
+
+    it("isSubPhase accepts exile_tie_vote", () => {
+      expect(isSubPhase("exile_tie_vote")).toBe(true);
+    });
+
     it("isPlayer accepts valid player shape", () => {
       expect(isPlayer({ id: "p1", alive: true, role: "wolf", seat_index: 0 })).toBe(true);
       expect(isPlayer({ id: "p2", alive: false, role: null, seat_index: 1 })).toBe(true);

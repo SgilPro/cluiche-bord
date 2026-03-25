@@ -6,6 +6,8 @@ import {
   DayAnnounceDeathsPage,
   DaySpeechPage,
   DayVotePage,
+  ExileTieSpeechPage,
+  ExileTieVotePage,
   HunterShootPage,
   LastWordPage,
   NightHunterCheckPage,
@@ -81,6 +83,10 @@ export default function PhaseRouter({ state, roomId, myPlayerId, onAction }: Pha
         return <DaySpeechPage {...props} />;
       case "vote":
         return <DayVotePage {...props} />;
+      case "exile_tie_speech":
+        return <ExileTieSpeechPage {...props} />;
+      case "exile_tie_vote":
+        return <ExileTieVotePage {...props} />;
       case "hunter_shoot":
         return <HunterShootPage {...props} />;
       case "last_word":
