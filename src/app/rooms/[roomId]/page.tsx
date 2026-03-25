@@ -143,19 +143,7 @@ export default function WaitingRoomPage() {
     try {
       const ch = channelRef.current;
       if (ch) {
-        // TODO: derive config from room.variant_id once backend supports it (api-requirements.md #2)
-        const basic10Config = {
-          rules: { sheriff: true, massacre: false, witch_self_rescue: false },
-          roles: [
-            { role: "seer", count: 1 },
-            { role: "witch", count: 1 },
-            { role: "hunter", count: 1 },
-            { role: "wolf", count: 3 },
-            { role: "villager", count: 4 },
-          ],
-        };
         await ch.push("start_game", {
-          config: basic10Config,
           player_ids: room.players.map((p) => p.user_id),
         });
       } else {
