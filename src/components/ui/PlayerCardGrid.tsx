@@ -1,7 +1,7 @@
 "use client";
 
-import { User } from "lucide-react";
 import type { Player } from "@/lib/games/werewolf/types";
+import { getAvatarColor, getAvatarInitial } from "@/lib/utils/avatar";
 
 export interface PlayerCard {
   player: Player;
@@ -67,9 +67,15 @@ export default function PlayerCardGrid({
                 <span className="absolute top-1 right-1">{badge}</span>
               )}
 
-              {/* Avatar placeholder */}
-              <div className="mt-2 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--background-muted)]">
-                <User size={20} className="text-[var(--text-secondary)]" />
+              {/* Avatar color block */}
+              <div
+                className="mt-2 flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold"
+                style={{
+                  backgroundColor: getAvatarColor(player.id),
+                  color: "#fff",
+                }}
+              >
+                {getAvatarInitial(player.nickname, player.seat_index)}
               </div>
 
               {/* Nickname or seat label fallback */}
