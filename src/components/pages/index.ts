@@ -2,6 +2,8 @@ export { default as PhaseRouter } from "./PhaseRouter";
 export { default as DayAnnounceDeathsPage } from "./DayAnnounceDeathsPage";
 export { default as DaySpeechPage } from "./DaySpeechPage";
 export { default as DayVotePage } from "./DayVotePage";
+export { default as ExileTieSpeechPage } from "./ExileTieSpeechPage";
+export { default as ExileTieVotePage } from "./ExileTieVotePage";
 export { default as HunterShootPage } from "./HunterShootPage";
 export { default as LastWordPage } from "./LastWordPage";
 export { default as SheriffHandoverPage } from "./SheriffHandoverPage";

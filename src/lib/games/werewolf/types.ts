@@ -28,7 +28,9 @@ export type SubPhase =
   | "speech"
   | "vote"
   | "hunter_shoot"
-  | "sheriff_handover";
+  | "sheriff_handover"
+  | "exile_tie_speech"
+  | "exile_tie_vote";
 
 export const SUB_PHASES: SubPhase[] = [
   "role_reveal",
@@ -49,6 +51,8 @@ export const SUB_PHASES: SubPhase[] = [
   "vote",
   "hunter_shoot",
   "sheriff_handover",
+  "exile_tie_speech",
+  "exile_tie_vote",
 ];
 
 // --- Role (contract: role visible only to self / wolves) ---
@@ -81,6 +85,7 @@ export interface GameState {
   last_word_ids?: string[];
   last_word_index?: number;
   last_word_current_id?: string | null;
+  exile_tie_speech_current_id?: string | null;
 }
 
 // State event payload is the full game state

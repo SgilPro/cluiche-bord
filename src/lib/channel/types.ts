@@ -22,7 +22,9 @@ export type SubPhase =
   | "speech"
   | "vote"
   | "hunter_shoot"
-  | "sheriff_handover";
+  | "sheriff_handover"
+  | "exile_tie_speech"
+  | "exile_tie_vote";
 
 export interface ChannelPlayer {
   id: string;
@@ -42,6 +44,7 @@ export interface ChannelGameState {
   wolf_votes?: Record<string, string>;
   wolf_locks?: string[];
   timer_ends_at?: number;
+  exile_tie_speech_current_id?: string | null;
 }
 
 export interface PhaseChangePayload {
