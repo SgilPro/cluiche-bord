@@ -109,12 +109,14 @@
 - **CLAUDE.md @import**：`CLAUDE.md` 使用 `@path` 語法引用 `.ai/` 下的檔案。若 Claude Code 版本不支援，可改為直接 include 或 copy 內容。
 - **ticket-04d 狀態**：`components/pages/` 已有所有遊戲階段元件，PhaseRouter 也已整合到 `/game/[roomId]`，但後端 Channel 整合尚未完整（目前為 mock 資料）。ticket-04d 留為「待整合後端資料」狀態。
 
-### Ticket 05 計劃期（待 review）
+### Ticket 05 完成後狀態（2026-03-25）
 
-- **玩家暱稱缺口**：`GameState.Player` 只有 `id`、`alive`、`role`、`seat_index`，沒有 `nickname`。遊戲中玩家卡片需要顯示暱稱，目前不確定後端 state event 是否會帶名稱。**需確認：後端會補 nickname 到 state，還是前端需要從等待室資料 cache 帶入？**
-- **avatar 缺口**：遊戲中玩家卡片需要頭像，但 state 沒有 avatar 欄位。暫定做法：用 seat_index % avatar_count 固定對應（待確認是否可接受）。
-- **過場推進時機**：天黑/天亮過場畫面（~10s）是由前端 timer 自動推進，不等後端。若期間收到新的 state event 則立即切換。此為預設做法，如需後端控制請告知。
-- **RoleReveal 時機**：角色揭示畫面（S0）在收到第一個 night state 時顯示（state.players[me].role 有值），倒數 5s 後進入天黑過場。此為前端自主邏輯，不依賴額外的 channel event。
+- **玩家暱稱**：✅ 已解決。後端已在 state.players 提供 `nickname`，前端型別已更新，UI 改用 `nickname ?? 座位號`。
+- **avatar 缺口**：⬜ 仍使用 seat_index 固定對應 avatar（待確認是否可接受）。
+- **過場推進時機**：✅ role_reveal / night_opening 由 state.sub_phase 驅動（後端控制）；day_opening / sheriff_opening 仍用前端 timer（~10s）。
+- **vote_tie / vote_no_exile**：✅ 基本處理完成（NotificationBanner）；`exile_tie_speech` / `exile_tie_vote` sub_phase 是否獨立存在待後端確認。
+- **start_game config**：🟡 目前 hardcode Basic10；待後端確認 spec 是否更新（api-requirements.md #2）。
+- **等待室玩家加入**：✅ REST polling（3s）workaround 已實作；待後端確認是否要加 channel event（api-requirements.md #6）。
 
 ---
 
@@ -129,7 +131,14 @@
 | 04a | Auth & REST client（guest、rooms）| 00 | 完成（已 merge）|
 | 04b | Phoenix Channel client（werewolf:room）| 00 | 完成（已 merge）|
 | 04c | 遊戲狀態型別（Channel state payload）| 04b | 完成（已 merge）|
-| 04d | 畫面：大廳、夜晚、警長、白天（分開或合一）| 02, 03, 04b | 待整合後端資料 |
+| 04d | 畫面：大廳、夜晚、警長、白天（分開或合一）| 02, 03, 04b | 完成（已 merge）|
+| 05a | game page → Channel 真實整合 | 04b | 完成（已 merge）|
+| 05b | 前端過場畫面（RoleReveal/NightOpening/DayOpening/SheriffOpening）| 05a | 完成（已 merge）|
+| 05c | 夜晚階段 UI（wolves/witch/seer/hunter_check）| 05a | 完成（已 merge）|
+| 05d | 警長競選 UI（run/speech/final_withdraw/vote）| 05a | 完成（已 merge）|
+| 05e | 白天流程 UI（announce_deaths/.../vote/hunter_shoot）| 05a | 完成（已 merge）|
+| 05f | 勝利畫面（VictoryPage）| 05a | 完成（已 merge）|
+| api-req | api-requirements.md 修正（nickname/sub_phase/vote_tie）| — | 完成 |
 
 ---
 
