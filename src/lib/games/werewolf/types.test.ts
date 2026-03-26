@@ -193,5 +193,31 @@ describe("werewolf types (channel contract)", () => {
       expect(isGameState({})).toBe(false);
       expect(isGameState({ ...statePayloadFromContract, phase: "invalid" })).toBe(false);
     });
+
+    it("isGameState accepts state with public_log present", () => {
+      const withLog = {
+        ...statePayloadFromContract,
+        public_log: [
+          {
+            seq: 1,
+            type: "night_start",
+            phase: "night",
+            day: 1,
+            visibility: "public",
+            visible_to: "all",
+            narration: "第一夜降臨",
+            data: {},
+            at: "2026-03-26T00:00:00Z",
+          },
+        ],
+      };
+      expect(isGameState(withLog)).toBe(true);
+    });
+
+    it("isGameState accepts state without public_log (optional field)", () => {
+      // public_log is optional – absence must not fail the guard
+      const { ...withoutLog } = statePayloadFromContract;
+      expect(isGameState(withoutLog)).toBe(true);
+    });
   });
 });
