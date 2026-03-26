@@ -129,11 +129,27 @@ export default function GameRoomPage() {
   if (gameState?.sub_phase === "role_reveal") {
     const myPlayer = gameState.players.find((p) => p.id === myPlayerId);
     const role = myPlayer?.role ?? "villager";
-    return <RoleRevealScreen role={role} />;
+    const isHost = gameState.players[0]?.id === myPlayerId;
+    return (
+      <RoleRevealScreen
+        role={role}
+        timerEndsAt={gameState.timer_ends_at}
+        isHost={isHost}
+        onAdvance={() => onAction("advance", {})}
+      />
+    );
   }
 
   if (gameState?.sub_phase === "night_opening") {
-    return <NightOpeningScreen dayNumber={gameState.day_number} />;
+    const isHost = gameState.players[0]?.id === myPlayerId;
+    return (
+      <NightOpeningScreen
+        dayNumber={gameState.day_number}
+        timerEndsAt={gameState.timer_ends_at}
+        isHost={isHost}
+        onAdvance={() => onAction("advance", {})}
+      />
+    );
   }
 
   // Timer-based transition screens for day/sheriff openings

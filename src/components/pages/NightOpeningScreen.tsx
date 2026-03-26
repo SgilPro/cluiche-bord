@@ -1,10 +1,20 @@
 "use client";
 
+import PhaseTimer from "@/components/ui/PhaseTimer";
+
 interface NightOpeningScreenProps {
   dayNumber: number;
+  timerEndsAt?: number;
+  isHost?: boolean;
+  onAdvance?: () => void;
 }
 
-export default function NightOpeningScreen({ dayNumber }: NightOpeningScreenProps) {
+export default function NightOpeningScreen({
+  dayNumber,
+  timerEndsAt,
+  isHost,
+  onAdvance,
+}: NightOpeningScreenProps) {
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[var(--background-primary)]">
       <div className="mx-auto flex max-w-[430px] flex-col items-center gap-6 px-6 text-center">
@@ -19,6 +29,18 @@ export default function NightOpeningScreen({ dayNumber }: NightOpeningScreenProp
             請所有玩家閉上雙眼
           </p>
         </div>
+
+        <PhaseTimer timerEndsAt={timerEndsAt} className="text-3xl" />
+
+        {isHost && onAdvance && (
+          <button
+            type="button"
+            onClick={onAdvance}
+            className="mt-2 rounded-xl bg-white/20 px-8 py-3 text-sm font-medium text-[var(--text-on-dark)] hover:bg-white/30 active:bg-white/10"
+          >
+            推進
+          </button>
+        )}
       </div>
     </div>
   );

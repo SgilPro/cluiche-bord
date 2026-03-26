@@ -2,6 +2,7 @@
 
 import { Skull, Eye, FlaskConical, Crosshair, User } from "lucide-react";
 import type { RoleId } from "@/lib/games/werewolf/types";
+import PhaseTimer from "@/components/ui/PhaseTimer";
 
 interface RoleInfo {
   icon: React.ReactNode;
@@ -39,10 +40,19 @@ const ROLE_INFO: Record<RoleId, RoleInfo> = {
 
 interface RoleRevealScreenProps {
   role: RoleId;
+  timerEndsAt?: number;
+  isHost?: boolean;
+  onAdvance?: () => void;
   onConfirm?: () => void;
 }
 
-export default function RoleRevealScreen({ role, onConfirm }: RoleRevealScreenProps) {
+export default function RoleRevealScreen({
+  role,
+  timerEndsAt,
+  isHost,
+  onAdvance,
+  onConfirm,
+}: RoleRevealScreenProps) {
   const info = ROLE_INFO[role];
 
   return (
@@ -51,6 +61,8 @@ export default function RoleRevealScreen({ role, onConfirm }: RoleRevealScreenPr
         <p className="text-sm uppercase tracking-widest text-[var(--text-secondary)]">
           你的角色是
         </p>
+
+        <PhaseTimer timerEndsAt={timerEndsAt} className="text-3xl" />
 
         <div className="flex h-32 w-32 items-center justify-center rounded-full bg-white/10">
           {info.icon}
@@ -66,6 +78,16 @@ export default function RoleRevealScreen({ role, onConfirm }: RoleRevealScreenPr
             className="mt-4 rounded-xl bg-white/20 px-8 py-3 text-sm font-medium text-[var(--text-on-dark)] hover:bg-white/30 active:bg-white/10"
           >
             確認
+          </button>
+        )}
+
+        {isHost && onAdvance && (
+          <button
+            type="button"
+            onClick={onAdvance}
+            className="mt-2 rounded-xl bg-white/20 px-8 py-3 text-sm font-medium text-[var(--text-on-dark)] hover:bg-white/30 active:bg-white/10"
+          >
+            推進
           </button>
         )}
       </div>
