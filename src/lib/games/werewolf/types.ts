@@ -70,6 +70,20 @@ export interface Player {
   seat_index: number;
 }
 
+// --- PublicLogEntry ---
+
+export interface PublicLogEntry {
+  seq: number;
+  type: string;
+  phase: Phase;
+  day: number;
+  visibility: "public" | "private";
+  visible_to: string[] | "all";
+  narration: string | null;
+  data: Record<string, unknown>;
+  at: string; // ISO datetime string
+}
+
 // --- GameState (state event payload) ---
 
 export interface GameState {
@@ -86,6 +100,7 @@ export interface GameState {
   last_word_index?: number;
   last_word_current_id?: string | null;
   exile_tie_speech_current_id?: string | null;
+  public_log?: PublicLogEntry[];
 }
 
 // State event payload is the full game state

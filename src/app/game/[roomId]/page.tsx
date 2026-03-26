@@ -1,6 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import NarrationBar from "@/components/ui/NarrationBar";
+import GameLogPanel from "@/components/ui/GameLogPanel";
+import type { PublicLogEntry } from "@/lib/games/werewolf/types";
 import { useParams } from "next/navigation";
 import PhaseRouter from "@/components/pages/PhaseRouter";
 import NotificationBanner from "@/components/ui/NotificationBanner";
@@ -28,6 +31,9 @@ export default function GameRoomPage() {
   const [transitionScreen, setTransitionScreen] = useState<TransitionScreen>(null);
   const [myPlayerId, setMyPlayerId] = useState<string>("");
   const [voteNotice, setVoteNotice] = useState<"tie" | "no_exile" | null>(null);
+  const [logPanelOpen, setLogPanelOpen] = useState(false);
+  const [latestNarration, setLatestNarration] = useState<string | null>(null);
+  const lastSpokenSeqRef = useRef<number>(-1);
 
   /** Keep a ref to the channel so callbacks don't capture stale closures */
   const channelRef = useRef<WerewolfChannelApi | null>(null);
@@ -94,6 +100,26 @@ export default function GameRoomPage() {
         // Vote resolution notices (clears automatically when next state arrives)
         ch.on("vote_tie", () => setVoteNotice("tie"));
         ch.on("vote_no_exile", () => setVoteNotice("no_exile"));
+
+        // Private log entries sent directly to this player
+        ch.on("game_log_private", (payload) => {
+          const { entries } = payload as { entries: PublicLogEntry[] };
+          if (!entries || entries.length === 0) return;
+          const latest = entries[entries.length - 1];
+          if (latest.narration) setLatestNarration(latest.narration);
+
+          // TTS for private entries
+          if (typeof window !== "undefined" && "speechSynthesis" in window) {
+            window.speechSynthesis.cancel();
+            entries.forEach((entry) => {
+              if (!entry.narration) return;
+              const utterance = new SpeechSynthesisUtterance(entry.narration);
+              utterance.lang = "zh-TW";
+              utterance.rate = 0.9;
+              window.speechSynthesis.speak(utterance);
+            });
+          }
+        });
       })
       .catch((err: unknown) => {
         console.error("[GameRoomPage] Channel connection failed:", err);
@@ -107,6 +133,34 @@ export default function GameRoomPage() {
     // roomId is stable for the life of this page
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId]);
+
+  // TTS: speak new narration entries from public_log
+  useEffect(() => {
+    if (!gameState?.public_log) return;
+    const entries = gameState.public_log;
+    if (entries.length === 0) return;
+
+    const latest = entries[entries.length - 1];
+
+    // Update narration display
+    if (latest.narration) setLatestNarration(latest.narration);
+
+    // TTS: speak only new entries
+    const newEntries = entries.filter((e) => e.seq > lastSpokenSeqRef.current);
+    if (newEntries.length === 0) return;
+    lastSpokenSeqRef.current = entries[entries.length - 1].seq;
+
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      newEntries.forEach((entry) => {
+        if (!entry.narration) return;
+        const utterance = new SpeechSynthesisUtterance(entry.narration);
+        utterance.lang = "zh-TW";
+        utterance.rate = 0.9;
+        window.speechSynthesis.speak(utterance);
+      });
+    }
+  }, [gameState?.public_log]);
 
   const onAction = useCallback(
     (event: WerewolfPushEvent, payload: Record<string, unknown>) => {
@@ -156,6 +210,22 @@ export default function GameRoomPage() {
 
   return (
     <>
+      {/* Log panel overlay */}
+      {logPanelOpen && (
+        <GameLogPanel
+          entries={gameState?.public_log ?? []}
+          onClose={() => setLogPanelOpen(false)}
+        />
+      )}
+
+      {/* Narration bar — fixed bottom (above ActionFooter, z-40) */}
+      {!logPanelOpen && (
+        <NarrationBar
+          narration={latestNarration}
+          onOpenLog={() => setLogPanelOpen(true)}
+        />
+      )}
+
       {voteNotice === "tie" && (
         <NotificationBanner message="投票平票！進入追加發言投票流程" />
       )}

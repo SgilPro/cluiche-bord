@@ -2,6 +2,7 @@
  * Minimal types for Werewolf channel events (full state shape in Ticket 04c).
  * Contract: channel-events.md
  */
+import type { PublicLogEntry } from "@/lib/games/werewolf/types";
 
 export type Phase = "night" | "day";
 export type SubPhase =
@@ -45,6 +46,7 @@ export interface ChannelGameState {
   wolf_locks?: string[];
   timer_ends_at?: number;
   exile_tie_speech_current_id?: string | null;
+  public_log?: PublicLogEntry[];
 }
 
 export interface PhaseChangePayload {
@@ -87,7 +89,8 @@ export type WerewolfChannelEvent =
   | "victory"
   | "role_action_result"
   | "vote_tie"
-  | "vote_no_exile";
+  | "vote_no_exile"
+  | "game_log_private";
 
 export interface VoteTiePayload {
   /** Player IDs that were tied */
@@ -97,3 +100,9 @@ export interface VoteTiePayload {
 export interface VoteNoExilePayload {
   reason: "tie" | "no_majority";
 }
+
+export interface GameLogPrivatePayload {
+  entries: PublicLogEntry[]; // visibility: "private"
+}
+
+export type { PublicLogEntry };

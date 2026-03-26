@@ -27,3 +27,7 @@ export { default as PhaseTimer } from "./PhaseTimer";
 export type { PhaseTimerProps } from "./PhaseTimer";
 export { default as ActionFooter } from "./ActionFooter";
 export type { ActionFooterProps } from "./ActionFooter";
+export { default as NarrationBar } from "./NarrationBar";
+export type { NarrationBarProps } from "./NarrationBar";
+export { default as GameLogPanel } from "./GameLogPanel";
+export type { GameLogPanelProps } from "./GameLogPanel";
