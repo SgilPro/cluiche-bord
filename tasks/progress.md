@@ -19,6 +19,12 @@
 | 05d 警長競選 UI | — | Done | subagent | ✓ |
 | 05e 白天流程 UI | — | Done | subagent | ✓ |
 | api-req fixes | — | Done | main | ✓ |
+| 06b | — | Done | subagent | ✓ |
+| 06c | — | Done | subagent | ✓ |
+| 06a | — | Done | subagent | ✓ |
+| 07a | codex/07a / .worktree/07a | In Progress | subagent | — |
+| 07b | codex/07b / .worktree/07b | In Progress | subagent | — |
+| 07c | codex/07c / .worktree/07c | In Progress | subagent | — |
 
 ---
 

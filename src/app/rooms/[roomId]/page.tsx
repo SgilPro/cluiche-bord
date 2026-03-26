@@ -270,7 +270,7 @@ export default function WaitingRoomPage() {
               className="h-full w-[104px] rounded-none text-black"
               leftIcon={<Play size={16} aria-hidden />}
               onClick={handleStartGame}
-              disabled={currentCount < maxCount || starting}
+              disabled={currentCount < (room.min_players ?? maxCount) || starting}
             >
               開始遊戲
             </Button>

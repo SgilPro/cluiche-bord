@@ -18,22 +18,11 @@
 
 ---
 
-## 2. 🔴 `start_game` channel push 需要改成由後端從 variant 推導 config
+## 2. ✅ `start_game` channel push 可省略 config
 
-**問題**：目前 `start_game` channel contract 要求前端傳入完整 `config`（roles、rules、timer 秒數），但這些資料存在 room 的 `variant_id` 裡，前端重複建構會造成雙重維護問題。
+**已確認**：後端已實作，只需傳 `{ "player_ids": [...] }`，後端自動從 `room.variant_id` 推導 config。
 
-**目前 spec 狀態**：`StartGameRequest` 的 `required` 仍包含 `config`，與後端宣稱已完成有出入，**需確認 spec 是否有更新**。
-
-**需要後端補充**：`start_game` 可接受省略 `config`，後端從 room 的 `variant_id` 自動推導：
-```json
-// 理想的前端 payload
-{
-  "player_ids": ["p1", "p2", ...]
-}
-// 後端從 room.variant_id → game_variant → config
-```
-
-**前端 workaround**：暫時 hardcode Basic10 預設 config（`sheriff: true, massacre: false`，roles 固定 10 人配置）。
+**前端待完成**：移除 hardcode Basic10 workaround，改為只傳 `player_ids`。
 
 ---
 
@@ -82,17 +71,23 @@
 
 ## 7. 🟡 `vote_tie` / `vote_no_exile` event 前端處理
 
-**狀態**：基本處理已完成。
+**狀態**：基本處理完成，`exile_tie_speech` / `exile_tie_vote` UI 待實作。
 
-- `vote_tie`：放逐投票平票，進入 `exile_tie_speech` → `exile_tie_vote` 流程
-- `vote_no_exile`：二次平票或無多數，本回合無人放逐
+- `vote_tie`：放逐投票平票 → broadcast `vote_tie`（含 candidates）→ `exile_tie_speech`（候選人輪流發言）→ `exile_tie_vote`（只有非候選人能投票）
+- `vote_no_exile`：二次平票，本回合無人放逐
 
 **前端已完成**：
 - ✅ `WerewolfChannelEvent` 加入 `vote_tie` / `vote_no_exile`；新增 `VoteTiePayload` / `VoteNoExilePayload` 型別
 - ✅ game page 監聽事件並顯示 NotificationBanner（平票提示 / 無人出局提示）
 - ✅ 收到新 `state` event 時自動清除通知
 
-**待確認**：`exile_tie_speech` / `exile_tie_vote` sub_phase 是否獨立存在，或重用 `speech` / `vote`？（若有獨立 sub_phase 需加入 SubPhase 型別和 PhaseRouter）。
+**已確認**：`exile_tie_speech` / `exile_tie_vote` 是獨立 sub_phase。
+
+**前端待完成**（新 ticket 06a）：
+- 加入 `exile_tie_speech` / `exile_tie_vote` 到 SubPhase 型別
+- `exile_tie_speech`：顯示當前發言者（`state.exile_tie_speech_current_id`）
+- `exile_tie_vote`：候選人不能投票（`available_actions` 會反映，UI 灰化）
+- PhaseRouter 加入新 sub_phase routing
 
 ---
 
@@ -101,9 +96,9 @@
 | # | 需求 | 優先級 | 後端狀態 | 前端方案 |
 |---|------|--------|---------|---------|
 | 1 | Player.nickname | ✅ | 已完成 | ✅ 前端已完成 |
-| 2 | start_game 省略 config | 🔴 | spec 未更新，待確認 | hardcode Basic10 |
+| 2 | start_game 省略 config | ✅ | 已完成 | 待前端移除 hardcode |
 | 3 | role_reveal / night_opening sub_phase | ✅ | 已完成 | ✅ 前端已完成 |
 | 4 | timer_ends_at 保證有值 | 🟢 | 待確認 | 可選顯示 |
 | 5 | role_action_result push 設計確認 | ✅ | 已確認 | ✅ |
 | 6 | 等待室玩家加入 channel event | 🟡 | 無 event | REST polling workaround |
-| 7 | vote_tie / vote_no_exile 前端處理 | 🟡 | 已有 event | ✅ 基本處理完成 |
+| 7 | vote_tie / vote_no_exile 前端處理 | 🟡 | exile_tie_speech/vote 已確認 | 待 ticket 06a 實作 |

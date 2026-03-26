@@ -14,6 +14,7 @@ export interface Room {
   id: string;
   name: string;
   max_players: number;
+  min_players?: number;
   game_id: string;
   variant_id: string | null;
   host_user_id: string;

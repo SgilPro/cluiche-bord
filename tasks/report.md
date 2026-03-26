@@ -112,10 +112,10 @@
 ### Ticket 05 完成後狀態（2026-03-25）
 
 - **玩家暱稱**：✅ 已解決。後端已在 state.players 提供 `nickname`，前端型別已更新，UI 改用 `nickname ?? 座位號`。
-- **avatar 缺口**：⬜ 仍使用 seat_index 固定對應 avatar（待確認是否可接受）。
+- **avatar 缺口**：🟡 後端不提供 avatar。決定走選項 A：前端用 `user_id` hash 生成色塊 avatar，待 ticket 06c 實作。
 - **過場推進時機**：✅ role_reveal / night_opening 由 state.sub_phase 驅動（後端控制）；day_opening / sheriff_opening 仍用前端 timer（~10s）。
-- **vote_tie / vote_no_exile**：✅ 基本處理完成（NotificationBanner）；`exile_tie_speech` / `exile_tie_vote` sub_phase 是否獨立存在待後端確認。
-- **start_game config**：🟡 目前 hardcode Basic10；待後端確認 spec 是否更新（api-requirements.md #2）。
+- **vote_tie / vote_no_exile**：✅ 基本處理完成；`exile_tie_speech` / `exile_tie_vote` 已確認為獨立 sub_phase，待 ticket 06a 實作完整 UI。
+- **start_game config**：✅ 後端已可省略 config，只傳 `player_ids`；待前端 ticket 06b 移除 hardcode Basic10。
 - **等待室玩家加入**：✅ REST polling（3s）workaround 已實作；待後端確認是否要加 channel event（api-requirements.md #6）。
 
 ---
@@ -139,6 +139,9 @@
 | 05e | 白天流程 UI（announce_deaths/.../vote/hunter_shoot）| 05a | 完成（已 merge）|
 | 05f | 勝利畫面（VictoryPage）| 05a | 完成（已 merge）|
 | api-req | api-requirements.md 修正（nickname/sub_phase/vote_tie）| — | 完成 |
+| 06a | exile_tie_speech / exile_tie_vote sub_phase UI | 05e | 完成（已 merge）|
+| 06b | start_game 移除 hardcode config（只傳 player_ids）| 05a | 完成（已 merge）|
+| 06c | Avatar 生成（user_id hash → 色塊）| 03 | 完成（已 merge）|
 
 ---
 
