@@ -77,6 +77,76 @@ const mockRoom: Room = {
 
 // ---------- tests ----------
 
+// ---------- channel event handler tests ----------
+
+describe("WaitingRoomPage – channel player_joined / player_left events", () => {
+  let capturedHandlers: Record<string, (payload: unknown) => void>;
+
+  beforeEach(() => {
+    capturedHandlers = {};
+    mockConnect.mockClear();
+    mockJoin.mockClear();
+    mockOn.mockClear();
+    mockGetRoom.mockResolvedValue(mockRoom);
+    mockConnect.mockResolvedValue(undefined);
+    mockJoin.mockResolvedValue(undefined);
+    // Capture registered channel event handlers
+    mockOn.mockImplementation((event: string, handler: (payload: unknown) => void) => {
+      capturedHandlers[event] = handler;
+      return 1;
+    });
+  });
+
+  it("updates player list when player_joined event is received", async () => {
+    render(<WaitingRoomPage />);
+
+    // Wait for initial room load
+    await screen.findByRole("button", { name: /開始遊戲/ });
+
+    // Wait for channel connect/join and handlers to be registered
+    await waitFor(() => {
+      expect(capturedHandlers["player_joined"]).toBeDefined();
+    });
+
+    // Replace Player2 with a new player (same slot count, max_players is 2)
+    const newPlayers = [
+      { user_id: HOST_USER_ID, nickname: "Host" },
+      { user_id: "user-new-789", nickname: "NewPlayer" },
+    ];
+
+    // Simulate player_joined broadcast
+    capturedHandlers["player_joined"]({ players: newPlayers });
+
+    // The new player should appear and Player2 should be gone
+    await waitFor(() => {
+      expect(screen.getByText("NewPlayer")).toBeInTheDocument();
+    });
+    expect(screen.queryByText("Player2")).not.toBeInTheDocument();
+  });
+
+  it("updates player list when player_left event is received", async () => {
+    render(<WaitingRoomPage />);
+
+    // Wait for initial room load (Player2 is shown)
+    await screen.findByText("Player2");
+
+    // Wait for channel handlers to be registered
+    await waitFor(() => {
+      expect(capturedHandlers["player_left"]).toBeDefined();
+    });
+
+    const reducedPlayers = [{ user_id: HOST_USER_ID, nickname: "Host" }];
+
+    // Simulate player_left broadcast
+    capturedHandlers["player_left"]({ players: reducedPlayers });
+
+    // Player2 should be removed from the list
+    await waitFor(() => {
+      expect(screen.queryByText("Player2")).not.toBeInTheDocument();
+    });
+  });
+});
+
 describe("WaitingRoomPage – handleStartGame", () => {
   beforeEach(() => {
     mockPush.mockClear();

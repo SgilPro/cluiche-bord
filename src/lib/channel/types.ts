@@ -87,7 +87,9 @@ export type WerewolfChannelEvent =
   | "victory"
   | "role_action_result"
   | "vote_tie"
-  | "vote_no_exile";
+  | "vote_no_exile"
+  | "player_joined"
+  | "player_left";
 
 export interface VoteTiePayload {
   /** Player IDs that were tied */
@@ -96,4 +98,17 @@ export interface VoteTiePayload {
 
 export interface VoteNoExilePayload {
   reason: "tie" | "no_majority";
+}
+
+export interface RoomPlayerPayload {
+  user_id: string;
+  nickname: string;
+}
+
+export interface PlayerJoinedPayload {
+  players: RoomPlayerPayload[];
+}
+
+export interface PlayerLeftPayload {
+  players: RoomPlayerPayload[];
 }

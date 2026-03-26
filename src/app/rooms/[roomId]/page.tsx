@@ -97,6 +97,15 @@ export default function WaitingRoomPage() {
             router.push(`/game/${roomId}`);
           }
         });
+        // 即時更新等待室玩家列表（spec 006）
+        ch.on("player_joined", (payload) => {
+          const { players } = payload as { players: Array<{ user_id: string; nickname: string }> };
+          setRoom((prev) => (prev ? { ...prev, players } : prev));
+        });
+        ch.on("player_left", (payload) => {
+          const { players } = payload as { players: Array<{ user_id: string; nickname: string }> };
+          setRoom((prev) => (prev ? { ...prev, players } : prev));
+        });
       })
       .catch(() => {
         // Channel unavailable — non-fatal for waiting room
